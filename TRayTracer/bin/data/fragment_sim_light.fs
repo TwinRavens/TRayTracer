@@ -10,11 +10,11 @@ uniform sampler2D previewTexture;
 
 void main()
 {
-	vec3 mouse3Pos = vec3(mousePos.x, mousePos.y, 1.0);
+	vec3 mouse3Pos = normalize(vec3(mousePos.x, mousePos.y, 1.0));
 	vec2 fragPos = vec2(gl_FragCoord.x*screenSizeDiv.x, gl_FragCoord.y*screenSizeDiv.y);
 	fragPos = fragPos * 2.0f - vec2(1.0f, 1.0f);
 	vec3 centerToFrag = normalize(vec3(fragPos, 1) - vec3(0, 0, 0));
 	vec3 reflection = 2.0f*mouse3Pos*dot(centerToFrag, mouse3Pos)-centerToFrag;
 
-	frag_colour = vec4(abs(reflection.x), 0, abs(reflection.y), 0);
+	frag_colour = texture(previewTexture,vec2(abs(reflection.x), abs(reflection.y)));
 }
