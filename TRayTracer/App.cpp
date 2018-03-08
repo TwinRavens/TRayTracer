@@ -1,5 +1,10 @@
 #include "App.h"
 
+//STB Image Includes
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
+
+//Using Ravine namespace
 using namespace rav;
 
 App::App()
@@ -70,6 +75,12 @@ int App::Initialize(cint &width, cint &height, str name, bool fullscreen)
 	glDepthFunc(GL_LESS);		//Depth-testing interprets a smaller value as "closer"
 	glEnable(GL_CULL_FACE);		//Cull faces whose normals don't point towards the camera
 
+	//Texture2D enabling
+	glEnable(GL_TEXTURE_2D);	//Enable 2D Texture slot
+
+	//Enable caching of buttons pressed
+	glfwSetInputMode(window, GLFW_STICKY_MOUSE_BUTTONS, GLFW_TRUE);
+
 	//Set a nice blue background
 	glClearColor(0.0f, 0.4509803921568627f, 0.8980392156862745f, 1.0f);
 
@@ -80,14 +91,16 @@ int App::Initialize(cint &width, cint &height, str name, bool fullscreen)
 int App::Run()
 {
 	float points[] = {
-		-0.5f, -0.5f,  0.0f, //Vertex
-		 1.0f,  0.0f,  0.0f, //Color
-		 0.5f, -0.5f,  0.0f, //Vertex
-		 0.0f,  1.0f,  0.0f, //Color
-		 0.0f,  0.5f,  0.0f, //Vertex
-		 0.0f,  0.0f,  1.0f	 //Color
+		//Position			  //UV
+   -1.0f, -1.0f,  0.0f,	0.0f,  0.0f, //Bottom left
+	1.0f,  1.0f,  0.0f,	1.0f,  1.0f, //Top-right
+   -1.0f,  1.0f,  0.0f,	0.0f,  1.0f, //Top-left
+   -1.0f, -1.0f,  0.0f,	0.0f,  0.0f, //Bottom-left
+	1.0f, -1.0f,  0.0f,	1.0f,  0.0f, //Bottom-right
+	1.0f,  1.0f,  0.0f,	1.0f,  1.0f  //Top-right
 	};
 
+	//Identity Matrix
 	float matrix[] = {
 		1, 0, 0, 0,
 		0, 1, 0, 0,
@@ -96,22 +109,22 @@ int App::Run()
 	};
 
 	char* vertex_shader;
-	rvLoadFile("vertex_color.vs", vertex_shader, true);
+	rvLoadFile("vertex_uv.vs", vertex_shader, true);
 
 	char* fragment_shader;
-	rvLoadFile("base_frag.fs", fragment_shader, true);
+	rvLoadFile("fragment_sim_light.fs", fragment_shader, true);
 
-	GLuint vs = rvCreateShader("vertex_color_vs", vertex_shader, RV_VERTEX_SHADER);
+	GLuint vs = rvCreateShader("vertex_uv_vs", vertex_shader, RV_VERTEX_SHADER);
 
-	GLuint fs = rvCreateShader("base_fragment_fs", fragment_shader, RV_FRAGMENT_SHADER);
+	GLuint fs = rvCreateShader("fragment_sim_light_fs", fragment_shader, RV_FRAGMENT_SHADER);
 
 	//Create program
 	GLuint pr = rvCreateProgram("test_pr", vs, fs);				//Create program with two shaders attached
-	rvSetAttributeLoc(pr, "vertex_position", 0);				//Set attribute location (before binding!)
-	rvSetAttributeLoc(pr, "vertex_color", 1);					//Set attribute location (before binding!)
+	//rvSetAttributeLoc(pr, "vertex_position", 0);				//Set attribute location (before linking!)
+	//rvSetAttributeLoc(pr, "vertex_coords", 1);				//Set attribute location (before linking!)
 	rvLinkProgram(pr);											//Link program
-	GLint vp_loc = rvGetAttributeLoc(pr, "vertex_position");	//Get attribute location (after binding!)
-	GLint vc_loc = rvGetAttributeLoc(pr, "vertex_color");		//Get attribute location (after binding!)
+	GLint vp_loc = rvGetAttributeLoc(pr, "vertex_position");	//Get attribute location (after linking!)
+	GLint vc_loc = rvGetAttributeLoc(pr, "vertex_coords");		//Get attribute location (after linking!)
 
 	//Create VertexBuffer Object
 	VertexBuffer vbo;
@@ -122,17 +135,17 @@ int App::Run()
 		3,							//Size of attribute (3 = XYZ)
 		GL_FLOAT,					//Type of attribute
 		false,						//Not normalized
-		sizeof(float) * 6,			//Size of buffer block per vertex (3 for XYZ and 3 for RGB)
+		sizeof(float) * 5,			//Size of buffer block per vertex (3 for XYZ and 2 for UV)
 		(void*)(0 * sizeof(float))	//Stride of 0 bytes (starts at the beginning of the block)
-	});
-	vbo.AddBufferDescriptor({		//Vertex Color Attribute
+		});
+	vbo.AddBufferDescriptor({		//Vertex UV Attribute
 		vc_loc,						//Location ID
-		3,							//Size of attribute (3 = RGB)
+		2,							//Size of attribute (2 = UV)
 		GL_FLOAT,					//Type of attribute
 		false,						//Not normalized
-		sizeof(float) * 6,			//Size of buffer block per vertex (3 for XYZ and 3 for RGB)
+		sizeof(float) * 5,			//Size of buffer block per vertex (3 for XYZ and 2 for UV)
 		(void*)(3 * sizeof(float))	//Stride of 3 bytes (starts 3 bytes away from the beginning of the block)
-	});
+		});
 
 	//Copy data to VertexBuffer Object
 	vbo.Fill(sizeof(points), points);
@@ -143,17 +156,46 @@ int App::Run()
 	//Enable locations for the created shader program
 	vao.EnableLocations(pr);
 
-    //Use VBO for setting data pointers
-    vbo.SetAttributePointers();
+	//Use VBO for setting data pointers
+	vbo.SetAttributePointers();
 
-	/* Loop until the user closes the window */
+	//Generate texture
+	unsigned int texture;
+	glGenTextures(1, &texture);
+	glBindTexture(GL_TEXTURE_2D, texture);
+
+	//Define texture parameters
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);		//Repeat out of bounds UVs
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);		//Repeat out of bounds UVs
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);	//Set Image sampling filtering
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);	//Set Image sampling filtering
+
+	//Load texture with STB Image
+	int width, height, nrChannels;
+	unsigned char *data = stbi_load("container.jpg", &width, &height, &nrChannels, 0);
+	if (data)
+	{
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+		glGenerateMipmap(GL_TEXTURE_2D);
+		stbi_image_free(data);
+	}
+	else
+	{
+		rvDebug.Log("Failed to load texture", RV_ERROR_MESSAGE);
+	}
+
 	while (!glfwWindowShouldClose(window))
 	{
-		/* Render here */
+		//Clear back color and depth buffer
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		//Use shader program
 		rvUseProgram(pr);
+
+		int w, h;
+		glfwGetWindowSize(window, &w, &h);
+		GLint uniformLoc = glGetUniformLocation(pr, "screenSizeDiv");
+		glUniform2f(uniformLoc, 1 / (float)w, 1 / (float)h);
 
 		//Bind VAO
 		vao.Bind();
@@ -166,6 +208,28 @@ int App::Run()
 
 		//Poll for and process events
 		glfwPollEvents();
+
+		if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+		{
+			glfwSetWindowShouldClose(window, 1);
+		}
+
+		if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS)
+		{
+			double x, y;
+			glfwGetCursorPos(window, &x, &y);
+
+			int w, h;
+			glfwGetWindowSize(window, &w, &h);
+			x = (x / (float)w)*2.0f - 1.0f;
+			y = ((h-y) / (float)h)*2.0f - 1.0f;
+
+			rvDebug.Log("Mouse click at (" + to_string(x) + ";" + to_string(y) + ")");
+
+			GLint uniformLoc = glGetUniformLocation(pr, "mousePos");
+			glUniform2f(uniformLoc, x, y);
+			
+		}
 	}
 
 	//Return Sucessfully Exit

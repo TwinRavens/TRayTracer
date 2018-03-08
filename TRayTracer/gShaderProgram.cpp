@@ -151,16 +151,26 @@ bool rav::ShaderProgram::setAttributeLocation(const string& att_name, const GLin
 	{
 		//Log Error
 		rvDebug.Log("Program " + name + " is already linked! You must re-link it AFTER setting an attribute location!\n", RV_WARNING_MESSAGE);
+
+		//Return error
+		return false;
 	}
 
 	//Bind attribute location to given attribute variable (att_name)
 	glBindAttribLocation(ID, att_loc, att_name.c_str());
 
-	//Get iterator
-	map<string, GLint>::const_iterator it = attributes.find(att_name);
-
-	//Register ID
-	attributes.emplace(att_name, att_loc);
+	//Check if attribute exists
+	map<string, GLint>::iterator it = attributes.find(att_name);
+	if (it != attributes.end())
+	{
+		//Change existing attribute
+		it->second = att_loc;
+	}
+	else
+	{
+		//Register ID
+		attributes.emplace(att_name, att_loc);
+	}
 
 	//Log Sucess
 	rvDebug.Log("Attribute " + att_name + " binded successfully!\n");
@@ -188,7 +198,7 @@ GLuint rav::ShaderProgram::getAttributes(ShaderAttribute*& container) const
 	return attributes.size();
 }
 
-GLint rav::ShaderProgram::getAttribute(const string & att_name) const
+GLint rav::ShaderProgram::getAttribute(const string & att_name)
 {
 	//Get iterator
 	map<string, GLint>::const_iterator it = attributes.find(att_name);
@@ -196,6 +206,18 @@ GLint rav::ShaderProgram::getAttribute(const string & att_name) const
 	//If no attribute was found
 	if (it == attributes.end())
 	{
+		GLint shaderID;
+
+		//Check if it exists in the shader
+		if ((shaderID = glGetAttribLocation(ID, att_name.c_str())) >= 0)
+		{
+			//Map attribute in shader to given location
+			attributes.emplace(att_name, shaderID);
+
+			//Return attribute location
+			return shaderID;
+		}
+
 		//Log Error
 		rvDebug.Log("Attribute " + att_name + " in program " + name + " was not found!\n", RV_ERROR_MESSAGE);
 

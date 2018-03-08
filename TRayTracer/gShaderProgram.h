@@ -69,7 +69,7 @@ namespace rav
 		GLuint getAttributes(ShaderAttribute*& container) const;
 
 		//Gets attribute from list and return it's location
-		GLint getAttribute(const string& att_name) const;
+		GLint getAttribute(const string& att_name);
 
 		//Remove an attribute from this shader
 		bool remAttribute(const string& att_name);
