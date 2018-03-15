@@ -112,11 +112,11 @@ int App::Run()
 	rvLoadFile("vertex_uv.vs", vertex_shader, true);
 
 	char* fragment_shader;
-	rvLoadFile("fragment_sim_light.fs", fragment_shader, true);
+	rvLoadFile("fragment_base.fs", fragment_shader, true);
 
 	GLuint vs = rvCreateShader("vertex_uv_vs", vertex_shader, RV_VERTEX_SHADER);
 
-	GLuint fs = rvCreateShader("fragment_sim_light_fs", fragment_shader, RV_FRAGMENT_SHADER);
+	GLuint fs = rvCreateShader("fragment_base_vs", fragment_shader, RV_FRAGMENT_SHADER);
 
 	//Create program
 	GLuint pr = rvCreateProgram("test_pr", vs, fs);				//Create program with two shaders attached
@@ -162,27 +162,81 @@ int App::Run()
 	//Generate texture
 	unsigned int texture;
 	glGenTextures(1, &texture);
+	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, texture);
 
 	//Define texture parameters
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);		//Repeat out of bounds UVs
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);		//Repeat out of bounds UVs
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);		//Repeat out of bounds UVs
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);		//Repeat out of bounds UVs
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);	//Set Image sampling filtering
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);	//Set Image sampling filtering
 
-	//Load texture with STB Image
-	int width, height, nrChannels;
-	unsigned char *data = stbi_load("container.jpg", &width, &height, &nrChannels, 0);
-	if (data)
-	{
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
-		glGenerateMipmap(GL_TEXTURE_2D);
-		stbi_image_free(data);
-	}
-	else
-	{
-		rvDebug.Log("Failed to load texture", RV_ERROR_MESSAGE);
-	}
+	//Set Image sizes
+	int width  = 1920, height = 1080;
+
+	//Bind Image Texture to layout 0
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, width, height, 0, GL_RGBA, GL_FLOAT, NULL);
+	glBindImageTexture(0, texture, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA32F);
+
+	////Load texture with STB Image
+	//int width, height, nrChannels;
+	//unsigned char *data = stbi_load("container.jpg", &width, &height, &nrChannels, 0);
+	//if (data)
+	//{
+	//	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+	//	glGenerateMipmap(GL_TEXTURE_2D);
+	//	stbi_image_free(data);
+	//}
+	//else
+	//{
+	//	rvDebug.Log("Failed to load texture", RV_ERROR_MESSAGE);
+	//}
+
+	//Setup Compute Shader Variables
+	int work_grp_cnt[3];
+
+	glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_COUNT, 0, &work_grp_cnt[0]);
+	glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_COUNT, 1, &work_grp_cnt[1]);
+	glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_COUNT, 2, &work_grp_cnt[2]);
+
+	printf("max global (total) work group size x:%i y:%i z:%i\n",
+		work_grp_cnt[0], work_grp_cnt[1], work_grp_cnt[2]);
+
+	int work_grp_size[3];
+
+	//
+	glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_SIZE, 0, &work_grp_size[0]);
+	glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_SIZE, 1, &work_grp_size[1]);
+	glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_SIZE, 2, &work_grp_size[2]);
+
+	printf("max local (in one shader) work group sizes x:%i y:%i z:%i\n",
+		work_grp_size[0], work_grp_size[1], work_grp_size[2]);
+
+	//
+	int work_grp_inv;
+
+	glGetIntegerv(GL_MAX_COMPUTE_WORK_GROUP_INVOCATIONS, &work_grp_inv);
+	printf("max local work group invocations %i\n", work_grp_inv);
+
+	//Load Compute Shader
+	char* compute_shader;
+	rvLoadFile("compute_shader.glcs", compute_shader, true);
+
+	GLuint ray_shader = glCreateShader(GL_COMPUTE_SHADER);
+	glShaderSource(ray_shader, 1, &compute_shader, NULL);
+	glCompileShader(ray_shader);
+	// check for compilation errors as per normal here
+
+	GLuint ray_program = glCreateProgram();
+	glAttachShader(ray_program, ray_shader);
+	glLinkProgram(ray_program);
+
+	//Lunch Compute Shader!
+	glUseProgram(ray_program);
+	glDispatchCompute((GLuint)width, (GLuint)height, 1);
+
+	// make sure writing to image has finished before read
+	glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
 
 	while (!glfwWindowShouldClose(window))
 	{
@@ -192,10 +246,9 @@ int App::Run()
 		//Use shader program
 		rvUseProgram(pr);
 
-		int w, h;
-		glfwGetWindowSize(window, &w, &h);
-		GLint uniformLoc = glGetUniformLocation(pr, "screenSizeDiv");
-		glUniform2f(uniformLoc, 1 / (float)w, 1 / (float)h);
+		//Texture binding
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, texture);
 
 		//Bind VAO
 		vao.Bind();
@@ -212,23 +265,6 @@ int App::Run()
 		if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
 		{
 			glfwSetWindowShouldClose(window, 1);
-		}
-
-		if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS)
-		{
-			double x, y;
-			glfwGetCursorPos(window, &x, &y);
-
-			int w, h;
-			glfwGetWindowSize(window, &w, &h);
-			x = (x / (float)w)*2.0f - 1.0f;
-			y = ((h-y) / (float)h)*2.0f - 1.0f;
-
-			rvDebug.Log("Mouse click at (" + to_string(x) + ";" + to_string(y) + ")");
-
-			GLint uniformLoc = glGetUniformLocation(pr, "mousePos");
-			glUniform2f(uniformLoc, x, y);
-			
 		}
 	}
 

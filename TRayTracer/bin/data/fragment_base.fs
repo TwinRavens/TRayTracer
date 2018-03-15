@@ -1,9 +1,12 @@
 #version 400
 
-in vec3 v_colour;
 out vec4 frag_colour;
+
+in vec2 v_coords;
+
+uniform sampler2D tex_2d;
 
 void main()
 {
-	frag_colour = vec4(v_colour, 1.0);
+	frag_colour = texture(tex_2d, v_coords);
 }
