@@ -137,7 +137,7 @@ int App::Run()
 		false,						//Not normalized
 		sizeof(float) * 5,			//Size of buffer block per vertex (3 for XYZ and 2 for UV)
 		(void*)(0 * sizeof(float))	//Stride of 0 bytes (starts at the beginning of the block)
-		});
+	});
 	vbo.AddBufferDescriptor({		//Vertex UV Attribute
 		vc_loc,						//Location ID
 		2,							//Size of attribute (2 = UV)
@@ -145,7 +145,7 @@ int App::Run()
 		false,						//Not normalized
 		sizeof(float) * 5,			//Size of buffer block per vertex (3 for XYZ and 2 for UV)
 		(void*)(3 * sizeof(float))	//Stride of 3 bytes (starts 3 bytes away from the beginning of the block)
-		});
+	});
 
 	//Copy data to VertexBuffer Object
 	vbo.Fill(sizeof(points), points);
@@ -172,7 +172,7 @@ int App::Run()
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);	//Set Image sampling filtering
 
 	//Set Image sizes
-	int width  = 1920, height = 1080;
+	int width = 1920, height = 1080;
 
 	//Bind Image Texture to layout 0
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, width, height, 0, GL_RGBA, GL_FLOAT, NULL);
@@ -192,7 +192,7 @@ int App::Run()
 	//	rvDebug.Log("Failed to load texture", RV_ERROR_MESSAGE);
 	//}
 
-	//Setup Compute Shader Variables
+#pragma region Setup Compute Shader Variables
 	int work_grp_cnt[3];
 
 	glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_COUNT, 0, &work_grp_cnt[0]);
@@ -218,6 +218,8 @@ int App::Run()
 	glGetIntegerv(GL_MAX_COMPUTE_WORK_GROUP_INVOCATIONS, &work_grp_inv);
 	printf("max local work group invocations %i\n", work_grp_inv);
 
+#pragma endregion
+#pragma region Load Compute Shader
 	//Load Compute Shader
 	char* compute_shader;
 	rvLoadFile("compute_shader.glcs", compute_shader, true);
@@ -225,7 +227,41 @@ int App::Run()
 	GLuint ray_shader = glCreateShader(GL_COMPUTE_SHADER);
 	glShaderSource(ray_shader, 1, &compute_shader, NULL);
 	glCompileShader(ray_shader);
-	// check for compilation errors as per normal here
+	GLint isCompiled = 0;
+	glGetShaderiv(ray_shader, GL_COMPILE_STATUS, &isCompiled);
+
+	//If got an error
+	if (isCompiled == GL_FALSE)
+	{
+		//Get size of info log
+		GLint maxLength = 0;
+		glGetShaderiv(ray_shader, GL_INFO_LOG_LENGTH, &maxLength);
+
+		//The maxLength includes the NULL character
+		GLchar *errorLog = new GLchar[maxLength];
+		glGetShaderInfoLog(ray_shader, maxLength, &maxLength, &errorLog[0]);
+
+		//Error header
+		rvDebug.Log("Error compiling compute shader ", Debug::Error);
+
+		//Create message
+		string msg((const char*)errorLog);
+
+		//Pop last \0 char
+		msg.pop_back();
+
+		//Log Error through Debugger
+		rvDebug.Log(msg, Debug::Error);
+
+		//Don't leak the shader
+		glDeleteShader(ray_shader);
+	}
+	else
+	{
+		rvDebug.Log("Sucessfully compiled!\n");
+	}
+
+#pragma endregion
 
 	GLuint ray_program = glCreateProgram();
 	glAttachShader(ray_program, ray_shader);
