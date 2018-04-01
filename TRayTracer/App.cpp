@@ -100,6 +100,7 @@ int App::Run()
 	1.0f,  1.0f,  0.0f,	1.0f,  1.0f  //Top-right
 	};
 
+
 	//Identity Matrix
 	float matrix[] = {
 		1, 0, 0, 0,
