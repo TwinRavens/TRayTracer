@@ -159,7 +159,7 @@ int App::Run()
 	//Use VBO for setting data pointers
 	vbo.SetAttributePointers();
 
-	//Generate texture
+	//Generate empty texture
 	unsigned int texture;
 	glGenTextures(1, &texture);
 	glActiveTexture(GL_TEXTURE0);
@@ -192,7 +192,7 @@ int App::Run()
 	//	rvDebug.Log("Failed to load texture", RV_ERROR_MESSAGE);
 	//}
 
-	//Setup Compute Shader Variables
+	//Get Compute Shader Variables
 	int work_grp_cnt[3];
 
 	glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_COUNT, 0, &work_grp_cnt[0]);
