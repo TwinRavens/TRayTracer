@@ -193,8 +193,11 @@ int App::Run()
 	//	rvDebug.Log("Failed to load texture", RV_ERROR_MESSAGE);
 	//}
 
+<<<<<<< HEAD
 	//Get Compute Shader Variables
+=======
 #pragma region Setup Compute Shader Variables
+>>>>>>> 7e52f3435cc698df23cd5be043f20936b29dc1ad
 	int work_grp_cnt[3];
 
 	glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_COUNT, 0, &work_grp_cnt[0]);
