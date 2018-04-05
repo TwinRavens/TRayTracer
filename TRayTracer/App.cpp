@@ -70,6 +70,8 @@ int App::Initialize(cint &width, cint &height, str name, bool fullscreen)
 	printf("Renderer: %s\n", renderer);
 	printf("OpenGL version supported %s\n", version);
 
+	assert(version[0] > '3' && "Installed version of OpenGL doesn't support compute shader");
+
 	//For proper rendering
 	glEnable(GL_DEPTH_TEST);	//Enable depth-testing
 	glDepthFunc(GL_LESS);		//Depth-testing interprets a smaller value as "closer"
@@ -138,7 +140,7 @@ int App::Run()
 		false,						//Not normalized
 		sizeof(float) * 5,			//Size of buffer block per vertex (3 for XYZ and 2 for UV)
 		(void*)(0 * sizeof(float))	//Stride of 0 bytes (starts at the beginning of the block)
-	});
+		});
 	vbo.AddBufferDescriptor({		//Vertex UV Attribute
 		vc_loc,						//Location ID
 		2,							//Size of attribute (2 = UV)
@@ -146,7 +148,7 @@ int App::Run()
 		false,						//Not normalized
 		sizeof(float) * 5,			//Size of buffer block per vertex (3 for XYZ and 2 for UV)
 		(void*)(3 * sizeof(float))	//Stride of 3 bytes (starts 3 bytes away from the beginning of the block)
-	});
+		});
 
 	//Copy data to VertexBuffer Object
 	vbo.Fill(sizeof(points), points);
