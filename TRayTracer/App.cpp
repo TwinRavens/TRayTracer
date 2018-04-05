@@ -340,6 +340,9 @@ int App::Run()
 
 #pragma endregion
 
+	//FUUUN
+	GLint timeLoc = glGetUniformLocation(ray_program, "time");
+	rvDebug.Log("Time Uniform Location: " + to_string(timeLoc), RV_WARNING_MESSAGE);
 
 	while (!glfwWindowShouldClose(window))
 	{
@@ -347,6 +350,9 @@ int App::Run()
 
 		//Lunch Compute Shader!
 		glUseProgram(ray_program);
+
+		//Update time variable
+		glUniform1f(timeLoc, glfwGetTime());
 		glDispatchCompute((GLuint)width, (GLuint)height, 1);
 
 		// make sure writing to image has finished before read
@@ -378,6 +384,7 @@ int App::Run()
 		{
 			glfwSetWindowShouldClose(window, 1);
 		}
+
 	}
 
 	//Return Sucessfully Exit

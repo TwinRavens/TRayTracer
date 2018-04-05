@@ -3,6 +3,8 @@
 layout(local_size_x = 1, local_size_y = 1) in;
 layout(rgba32f, binding = 0) uniform image2D img_output;
 
+uniform float time;
+
 struct Ray
 {
 	vec4 origin;
@@ -78,7 +80,7 @@ void main() {
 	for(int i = 0; i < 7; i++)
 	{
 		//define sphere
-		vec3 sphereCenter = vec3(i * 5 - 15, 0.0, -10.0);
+		vec3 sphereCenter = vec3(i * 5 - 15, sin(time + i*0.5f) * 3, -10.0);
 		float sphereRadius = 1.0;
 
 
@@ -100,7 +102,7 @@ void main() {
 	}
 
 	if(indexClosestSphere != -1) {
-		vec3 sphereCenter = vec3(indexClosestSphere * 5 - 15, 0.0, -10.0);
+		vec3 sphereCenter = vec3(indexClosestSphere * 5 - 15, sin(time + indexClosestSphere*0.5f) * 3, -10.0);
 		float sphereRadius = 1.0;
 
 		vec3 hit = vec3(cameraOrigin.x + cameraDir.x * closestDelta, cameraOrigin.y + cameraDir.y * closestDelta, cameraOrigin.z + cameraDir.z * closestDelta);
