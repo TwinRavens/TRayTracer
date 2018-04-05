@@ -138,7 +138,7 @@ int App::Run()
 		false,						//Not normalized
 		sizeof(float) * 5,			//Size of buffer block per vertex (3 for XYZ and 2 for UV)
 		(void*)(0 * sizeof(float))	//Stride of 0 bytes (starts at the beginning of the block)
-	});
+		});
 	vbo.AddBufferDescriptor({		//Vertex UV Attribute
 		vc_loc,						//Location ID
 		2,							//Size of attribute (2 = UV)
@@ -146,7 +146,7 @@ int App::Run()
 		false,						//Not normalized
 		sizeof(float) * 5,			//Size of buffer block per vertex (3 for XYZ and 2 for UV)
 		(void*)(3 * sizeof(float))	//Stride of 3 bytes (starts 3 bytes away from the beginning of the block)
-	});
+		});
 
 	//Copy data to VertexBuffer Object
 	vbo.Fill(sizeof(points), points);
@@ -221,6 +221,8 @@ int App::Run()
 	printf("max local work group invocations %i\n", work_grp_inv);
 
 #pragma endregion
+
+
 #pragma region Load Compute Shader
 	//Load Compute Shader
 	char* compute_shader;
@@ -268,6 +270,53 @@ int App::Run()
 	GLuint ray_program = glCreateProgram();
 	glAttachShader(ray_program, ray_shader);
 	glLinkProgram(ray_program);
+
+#pragma region Passing Uniform Blocks
+
+	//Ortographic camera rays
+	Ray* rays = new Ray[width*height];
+	{
+		int rayId = 0;
+		float xStep = 2.0f / (width + 1), yStep = 2.0f / (height + 1);
+		float xPos = -1.0f + xStep, yPos = -1.0f + yStep;
+		for (size_t i = 0; i < height; i++)
+		{
+			for (size_t j = 0; j < width; j++)
+			{
+				rays[rayId].origin = { xPos, yPos, 0, 0 };
+				rays[rayId].dirAndId = { 0, 0, -1, (float)rayId };
+				rayId++;
+				xPos += xStep;
+			}
+			xPos = -1.0f + xStep;
+			yPos += yStep;
+		}
+	}
+
+	//Copy data to OpenGL
+	GLuint ssbo = 0;
+	glGenBuffers(1, &ssbo);
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo);
+	glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(Ray) * width * height, rays, GL_DYNAMIC_COPY);
+	//glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+
+	//GLvoid* p = glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_WRITE_ONLY);
+	//memcpy(p, rays, sizeof(sizeof(Ray) * width * height));
+	//glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+
+	//Get Shader Storage index from program
+	GLuint block_index = 0;
+	block_index = glGetProgramResourceIndex(ray_program, GL_SHADER_STORAGE_BLOCK, "shader_data");
+	if (block_index == GL_INVALID_INDEX)
+		rvDebug.Log("Storage Block couldn't be found on program with id " + to_string(ray_program));
+
+	GLuint ssbo_binding_point_index = 2;
+	glShaderStorageBlockBinding(ray_program, block_index, ssbo_binding_point_index);
+
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, ssbo_binding_point_index, ssbo);
+
+
+#pragma endregion
 
 	//Lunch Compute Shader!
 	glUseProgram(ray_program);
