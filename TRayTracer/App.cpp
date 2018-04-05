@@ -26,6 +26,22 @@ App & App::getApp()
 	return app;
 }
 
+void _update_fps_counter(GLFWwindow* window) {
+	static double previous_seconds = glfwGetTime();
+	static int frame_count;
+	double current_seconds = glfwGetTime();
+	double elapsed_seconds = current_seconds - previous_seconds;
+	if (elapsed_seconds > 0.25) {
+		previous_seconds = current_seconds;
+		double fps = (double)frame_count / elapsed_seconds;
+		char tmp[128];
+		sprintf_s(tmp, "opengl @ fps: %.2f", fps);
+		glfwSetWindowTitle(window, tmp);
+		frame_count = 0;
+	}
+	frame_count++;
+}
+
 int App::Initialize(cint &width, cint &height, str name, bool fullscreen)
 {
 	//Try to initialize GLFW
@@ -223,6 +239,8 @@ int App::Run()
 	printf("max local work group invocations %i\n", work_grp_inv);
 
 #pragma endregion
+
+
 #pragma region Load Compute Shader
 	//Load Compute Shader
 	char* compute_shader;
@@ -271,15 +289,69 @@ int App::Run()
 	glAttachShader(ray_program, ray_shader);
 	glLinkProgram(ray_program);
 
-	//Lunch Compute Shader!
-	glUseProgram(ray_program);
-	glDispatchCompute((GLuint)width, (GLuint)height, 1);
+#pragma region Passing Uniform Blocks
 
-	// make sure writing to image has finished before read
-	glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+	//Ortographic camera rays
+	Ray* rays = new Ray[width*height];
+	{
+		int rayId = 0;
+		float xStep = 2.0f / (width + 1), yStep = 2.0f / (height + 1);
+		float xPos = -1.0f + xStep, yPos = -1.0f + yStep;
+		for (size_t i = 0; i < height; i++)
+		{
+			for (size_t j = 0; j < width; j++)
+			{
+				rays[rayId].origin = { xPos, yPos, 0, 0 };
+				rays[rayId].dirAndId = { 0, 0, -1, (float)rayId };
+				rayId++;
+				xPos += xStep;
+			}
+			xPos = -1.0f + xStep;
+			yPos += yStep;
+		}
+	}
+
+	//Copy data to OpenGL
+	GLuint ssbo = 0;
+	glGenBuffers(1, &ssbo);
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo);
+	glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(Ray) * width * height, rays, GL_DYNAMIC_COPY);
+	//glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+
+	//GLvoid* p = glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_WRITE_ONLY);
+	//memcpy(p, rays, sizeof(sizeof(Ray) * width * height));
+	//glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+
+	//Get Shader Storage index from program
+	GLuint block_index = 0;
+	block_index = glGetProgramResourceIndex(ray_program, GL_SHADER_STORAGE_BLOCK, "shader_data");
+	if (block_index == GL_INVALID_INDEX)
+		rvDebug.Log("Storage Block couldn't be found on program with id " + to_string(ray_program));
+
+	rvDebug.Log("Storage Block found at index " + to_string(block_index));
+
+
+	GLuint ssbo_binding_point_index = 2;
+	glShaderStorageBlockBinding(ray_program, block_index, ssbo_binding_point_index);
+	rvDebug.Log("Storage Block found at index " + to_string(ssbo_binding_point_index));
+
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, ssbo_binding_point_index, ssbo);
+
+
+#pragma endregion
+
 
 	while (!glfwWindowShouldClose(window))
 	{
+		_update_fps_counter(window);
+
+		//Lunch Compute Shader!
+		glUseProgram(ray_program);
+		glDispatchCompute((GLuint)width, (GLuint)height, 1);
+
+		// make sure writing to image has finished before read
+		glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+
 		//Clear back color and depth buffer
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 

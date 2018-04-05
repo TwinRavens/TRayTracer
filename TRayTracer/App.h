@@ -9,6 +9,8 @@
 //Main Includes
 #include <GL\glew.h>
 #include <GLFW\glfw3.h>
+#include <GLM\glm.hpp>
+#include <GLM\gtc\constants.hpp>
 
 //Ravine Includes
 #include "Common.h"
@@ -17,6 +19,10 @@
 #include "gVertexBuffer.h"
 #include "gVertexArray.h"
 #include "mFileLoader.h"
+
+//Raytracer Includes
+#include "Ray.h"
+#include "Primitives.h"
 
 //Typedefs
 typedef const int cint;

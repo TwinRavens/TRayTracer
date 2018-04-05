@@ -89,5 +89,13 @@
     <ClInclude Include="Ray.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Primitives.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="bin\data\compute_shader.glcs">
+      <Filter>Resource Files</Filter>
+    </None>
   </ItemGroup>
 </Project>
