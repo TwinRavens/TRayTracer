@@ -338,16 +338,18 @@ int App::Run()
 
 #pragma endregion
 
-	//Lunch Compute Shader!
-	glUseProgram(ray_program);
-	glDispatchCompute((GLuint)width, (GLuint)height, 1);
-
-	// make sure writing to image has finished before read
-	glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
 
 	while (!glfwWindowShouldClose(window))
 	{
 		_update_fps_counter(window);
+
+		//Lunch Compute Shader!
+		glUseProgram(ray_program);
+		glDispatchCompute((GLuint)width, (GLuint)height, 1);
+
+		// make sure writing to image has finished before read
+		glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+
 		//Clear back color and depth buffer
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
