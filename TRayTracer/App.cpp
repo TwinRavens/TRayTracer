@@ -310,8 +310,12 @@ int App::Run()
 	if (block_index == GL_INVALID_INDEX)
 		rvDebug.Log("Storage Block couldn't be found on program with id " + to_string(ray_program));
 
+	rvDebug.Log("Storage Block found at index " + to_string(block_index));
+
+
 	GLuint ssbo_binding_point_index = 2;
 	glShaderStorageBlockBinding(ray_program, block_index, ssbo_binding_point_index);
+	rvDebug.Log("Storage Block found at index " + to_string(ssbo_binding_point_index));
 
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, ssbo_binding_point_index, ssbo);
 
