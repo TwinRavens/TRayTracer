@@ -61,7 +61,7 @@ void main() {
 	vec3 cameraDir = vec3(0.0, 0.0, -1.0); // ortho
 
 	int indexClosestSphere = -1;
-	float closestDelta = 4294967296; 
+	float closestDelta = 4294967296.0; 
 
 	for(int i = 0; i < 7; i++)
 	{
@@ -81,17 +81,17 @@ void main() {
 		if (delta >= 0.0) {
 			float hitT = -b + delta;
 			if(hitT < closestDelta && hitT > 1) {
-				indexSphere = i;
+				indexClosestSphere = i;
 				closestDelta = hitT;
 			}
 		}
 	}
 
-	if(indexClosestSphere == 1) {
+	if(indexClosestSphere != -1) {
 		vec3 sphereCenter = vec3(indexClosestSphere * 5 - 15, 0.0, -10.0);
 		float sphereRadius = 1.0;
 
-		vec3 hit = vec3(cameraOrigin.x + cameraDir.x * hitT, cameraOrigin.y + cameraDir.y * hitT, cameraOrigin.z + cameraDir.z * hitT);
+		vec3 hit = vec3(cameraOrigin.x + cameraDir.x * closestDelta, cameraOrigin.y + cameraDir.y * closestDelta, cameraOrigin.z + cameraDir.z * closestDelta);
 		vec3 normal = vec3((hit.x - sphereCenter.x)/sphereRadius,  (hit.y - sphereCenter.y)/sphereRadius, (hit.z - sphereCenter.z)/sphereRadius); 
 
 		pixel = shade(hit, normal, cameraDir);
