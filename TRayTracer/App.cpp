@@ -264,7 +264,7 @@ int App::Run()
 		glGetShaderInfoLog(ray_shader, maxLength, &maxLength, &errorLog[0]);
 
 		//Error header
-		rvDebug.Log("Error compiling compute shader ", Debug::Error);
+		rvDebug.Log("Error compiling compute shader ", RV_ERROR_MESSAGE);
 
 		//Create message
 		string msg((const char*)errorLog);
@@ -289,60 +289,102 @@ int App::Run()
 	glAttachShader(ray_program, ray_shader);
 	glLinkProgram(ray_program);
 
-#pragma region Passing Uniform Blocks
-
-	//Ortographic camera rays
-	Ray* rays = new Ray[width*height];
+#pragma region Passing Rays Buffer to Shader
 	{
-		int rayId = 0;
-		float xStep = 2.0f / (width + 1), yStep = 2.0f / (height + 1);
-		float xPos = -1.0f + xStep, yPos = -1.0f + yStep;
-		for (size_t i = 0; i < height; i++)
+		//Ortographic camera rays
+		Ray* rays = new Ray[width*height];
 		{
-			for (size_t j = 0; j < width; j++)
+			int rayId = 0;
+			float xStep = 2.0f / (width + 1), yStep = 2.0f / (height + 1);
+			float xPos = -1.0f + xStep, yPos = -1.0f + yStep;
+			for (size_t i = 0; i < height; i++)
 			{
-				rays[rayId].origin = { xPos, yPos, 0, 0 };
-				rays[rayId].dirAndId = { 0, 0, -1, (float)rayId };
-				rayId++;
-				xPos += xStep;
+				for (size_t j = 0; j < width; j++)
+				{
+					rays[rayId].origin = { xPos, yPos, 0, 0 };
+					rays[rayId].dirAndId = { 0, 0, -1, (float)rayId };
+					rayId++;
+					xPos += xStep;
+				}
+				xPos = -1.0f + xStep;
+				yPos += yStep;
 			}
-			xPos = -1.0f + xStep;
-			yPos += yStep;
 		}
+
+		//Copy data to OpenGL
+		GLuint ssbo = 0;
+		glGenBuffers(1, &ssbo);
+		glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo);
+		glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(Ray) * width * height, rays, GL_DYNAMIC_COPY);
+
+		//Associate buffer index with binding point
+		GLuint ssbo_binding_point_index = 2;
+		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, ssbo_binding_point_index, ssbo);
+
+		//glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+
+		//GLvoid* p = glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_WRITE_ONLY);
+		//memcpy(p, rays, sizeof(sizeof(Ray) * width * height));
+		//glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+
+		//Get Shader Storage index from program
+		GLuint block_index = 0;
+		block_index = glGetProgramResourceIndex(ray_program, GL_SHADER_STORAGE_BLOCK, "rBuffer");
+		if (block_index == GL_INVALID_INDEX)
+			rvDebug.Log("rBuffer Storage Block couldn't be found on program with id " + to_string(ray_program));
+		rvDebug.Log("rBuffer Storage Block found at index " + to_string(block_index));
+
+
+		glShaderStorageBlockBinding(ray_program, block_index, ssbo_binding_point_index);
+		rvDebug.Log("rBuffer Storage Block binding is " + to_string(ssbo_binding_point_index));
 	}
+#pragma endregion
 
-	//Copy data to OpenGL
-	GLuint ssbo = 0;
-	glGenBuffers(1, &ssbo);
-	glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo);
-	glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(Ray) * width * height, rays, GL_DYNAMIC_COPY);
-	//glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+#pragma region Passing Primitives Buffer to Shader
+	{
+		//Generate Primitives Information
+		Sphere spheres[] = {
+			//POS x		y	 z	  scale		COL r	g	b	coef	SPEC pow	coef
+			{ -15,	0,	-10,	1,			1,	0,	0,	0.8,		 50,	0.6 },
+			{ -10,	0,	-10,	2,			1,	0,	0,	0.8,		 50,	0.6 },
+			{ -5,	0,	-10,	1,			1,	0,	0,	0.8,		 50,	0.6 },
+			{ 0,	0,	-10,	1,			1,	0,	0,	0.8,		 50,	0.6 },
+			{ 5,	0,	-10,	1,			1,	0,	0,	0.8,		 50,	0.6 },
+			{ 10,	0,	-10,	2,			1,	0,	0,	0.8,		 50,	0.6 },
+			{ 15,	0,	-10,	1,			1,	0,	0,	0.8,		 50,	0.6 }
+		};
 
-	//GLvoid* p = glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_WRITE_ONLY);
-	//memcpy(p, rays, sizeof(sizeof(Ray) * width * height));
-	//glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+		//Copy data to OpenGL
+		GLuint ssbo = 0;
+		glGenBuffers(1, &ssbo);
+		glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo);
+		glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(spheres), spheres, GL_DYNAMIC_COPY);
 
-	//Get Shader Storage index from program
-	GLuint block_index = 0;
-	block_index = glGetProgramResourceIndex(ray_program, GL_SHADER_STORAGE_BLOCK, "shader_data");
-	if (block_index == GL_INVALID_INDEX)
-		rvDebug.Log("Storage Block couldn't be found on program with id " + to_string(ray_program));
+		//Associate buffer index with binding point
+		GLuint ssbo_binding_point_index = 3;
+		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, ssbo_binding_point_index, ssbo);
 
-	rvDebug.Log("Storage Block found at index " + to_string(block_index));
+		//glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+
+		//GLvoid* p = glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_WRITE_ONLY);
+		//memcpy(p, rays, sizeof(sizeof(Ray) * width * height));
+		//glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+
+		//Get Shader Storage index from program
+		GLuint block_index = 0;
+		block_index = glGetProgramResourceIndex(ray_program, GL_SHADER_STORAGE_BLOCK, "sBuffer");
+		if (block_index == GL_INVALID_INDEX)
+			rvDebug.Log("sBuffer Storage Block couldn't be found on program with id " + to_string(ray_program));
+		rvDebug.Log("sBuffer Storage Block found at index " + to_string(block_index));
 
 
-	GLuint ssbo_binding_point_index = 2;
-	glShaderStorageBlockBinding(ray_program, block_index, ssbo_binding_point_index);
-	rvDebug.Log("Storage Block found at index " + to_string(ssbo_binding_point_index));
-
-	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, ssbo_binding_point_index, ssbo);
-
-
+		glShaderStorageBlockBinding(ray_program, block_index, ssbo_binding_point_index);
+		rvDebug.Log("sBuffer Storage Block binding is " + to_string(ssbo_binding_point_index));
+	}
 #pragma endregion
 
 	//FUUUN
 	GLint timeLoc = glGetUniformLocation(ray_program, "time");
-	rvDebug.Log("Time Uniform Location: " + to_string(timeLoc), RV_WARNING_MESSAGE);
 
 	while (!glfwWindowShouldClose(window))
 	{
