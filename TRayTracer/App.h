@@ -22,6 +22,7 @@
 
 //Raytracer Includes
 #include "Ray.h"
+#include "gRayTracer.h"
 #include "Primitives.h"
 
 //Typedefs

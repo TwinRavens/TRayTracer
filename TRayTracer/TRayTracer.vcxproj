@@ -71,26 +71,36 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <TargetName>$(ProjectName)</TargetName>
     <OutDir>.\bin\</OutDir>
-    <IntDir>$(Configuration)\</IntDir>
+    <IntDir>$(Configuration)\..\</IntDir>
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
+    <ExcludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(MSBuild_ExecutablePath);$(Configuration);$(VC_LibraryPath_x64);</ExcludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <TargetName>$(ProjectName) (x86)</TargetName>
     <OutDir>.\bin\</OutDir>
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
+    <ExcludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(MSBuild_ExecutablePath);$(Configuration);$(VC_LibraryPath_x86);</ExcludePath>
+    <IntDir>$(Configuration)\..\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <IntDir>$(Configuration)\</IntDir>
+    <IntDir>$(Configuration)\..\</IntDir>
     <OutDir>.\bin\</OutDir>
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
+    <ExcludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(MSBuild_ExecutablePath);$(Configuration);$(VC_LibraryPath_x64);</ExcludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <OutDir>.\bin\</OutDir>
     <TargetName>$(ProjectName) (x86)</TargetName>
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
+    <ExcludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(MSBuild_ExecutablePath);$(Configuration);$(VC_LibraryPath_x86);</ExcludePath>
+    <IntDir>$(Configuration)\..\</IntDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>..\include\</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>.\..\include\</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <AdditionalLibraryDirectories>..\lib\x86\</AdditionalLibraryDirectories>
@@ -102,7 +112,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>..\include\</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>.\..\include\</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <AdditionalDependencies>glm_static.lib;glfw3.lib;glew32.lib;opengl32.lib;assimp64.lib;%(AdditionalDependencies)</AdditionalDependencies>
@@ -116,7 +126,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>..\include\</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>.\..\include\</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
@@ -132,7 +142,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>..\include\</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>.\..\include\</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
@@ -144,6 +154,7 @@
   <ItemGroup>
     <ClCompile Include="App.cpp" />
     <ClCompile Include="Debug.cpp" />
+    <ClCompile Include="gRayTracer.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Mesh.cpp" />
     <ClCompile Include="gShader.cpp" />
@@ -157,6 +168,7 @@
     <ClInclude Include="App.h" />
     <ClInclude Include="Common.h" />
     <ClInclude Include="Debug.h" />
+    <ClInclude Include="gRayTracer.h" />
     <ClInclude Include="Math.h" />
     <ClInclude Include="Mesh.h" />
     <ClInclude Include="gShader.h" />
@@ -171,9 +183,8 @@
     <ClInclude Include="stb_image.h" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="bin\data\compute_shader.glcs">
-      <FileType>Document</FileType>
-    </None>
+    <None Include="bin\data\collisionCompShader.glsl" />
+    <None Include="bin\data\shadingCompShader.glsl" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

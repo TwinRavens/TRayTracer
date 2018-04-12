@@ -102,6 +102,9 @@ int App::Initialize(cint &width, cint &height, str name, bool fullscreen)
 	//Set a nice blue background
 	glClearColor(0.0f, 0.4509803921568627f, 0.8980392156862745f, 1.0f);
 
+	//Initialize Raytracer
+	RayTracer::Setup(width, height);
+
 	//Return no error message
 	return 0;
 }
@@ -178,25 +181,6 @@ int App::Run()
 	//Use VBO for setting data pointers
 	vbo.SetAttributePointers();
 
-	//Generate empty texture
-	unsigned int texture;
-	glGenTextures(1, &texture);
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, texture);
-
-	//Define texture parameters
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);		//Repeat out of bounds UVs
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);		//Repeat out of bounds UVs
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);	//Set Image sampling filtering
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);	//Set Image sampling filtering
-
-	//Set Image sizes
-	int width = 1920, height = 1080;
-
-	//Bind Image Texture to layout 0
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, width, height, 0, GL_RGBA, GL_FLOAT, NULL);
-	glBindImageTexture(0, texture, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA32F);
-
 	////Load texture with STB Image
 	//int width, height, nrChannels;
 	//unsigned char *data = stbi_load("container.jpg", &width, &height, &nrChannels, 0);
@@ -211,194 +195,11 @@ int App::Run()
 	//	rvDebug.Log("Failed to load texture", RV_ERROR_MESSAGE);
 	//}
 
-	//Get Compute Shader Variables
-#pragma region Setup Compute Shader Variables
-	int work_grp_cnt[3];
-
-	glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_COUNT, 0, &work_grp_cnt[0]);
-	glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_COUNT, 1, &work_grp_cnt[1]);
-	glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_COUNT, 2, &work_grp_cnt[2]);
-
-	printf("max global (total) work group size x:%i y:%i z:%i\n",
-		work_grp_cnt[0], work_grp_cnt[1], work_grp_cnt[2]);
-
-	int work_grp_size[3];
-
-	//
-	glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_SIZE, 0, &work_grp_size[0]);
-	glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_SIZE, 1, &work_grp_size[1]);
-	glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_SIZE, 2, &work_grp_size[2]);
-
-	printf("max local (in one shader) work group sizes x:%i y:%i z:%i\n",
-		work_grp_size[0], work_grp_size[1], work_grp_size[2]);
-
-	//
-	int work_grp_inv;
-
-	glGetIntegerv(GL_MAX_COMPUTE_WORK_GROUP_INVOCATIONS, &work_grp_inv);
-	printf("max local work group invocations %i\n", work_grp_inv);
-
-#pragma endregion
-
-
-#pragma region Load Compute Shader
-	//Load Compute Shader
-	char* compute_shader;
-	rvLoadFile("compute_shader.glcs", compute_shader, true);
-
-	GLuint ray_shader = glCreateShader(GL_COMPUTE_SHADER);
-	glShaderSource(ray_shader, 1, &compute_shader, NULL);
-	glCompileShader(ray_shader);
-	GLint isCompiled = 0;
-	glGetShaderiv(ray_shader, GL_COMPILE_STATUS, &isCompiled);
-
-	//If got an error
-	if (isCompiled == GL_FALSE)
-	{
-		//Get size of info log
-		GLint maxLength = 0;
-		glGetShaderiv(ray_shader, GL_INFO_LOG_LENGTH, &maxLength);
-
-		//The maxLength includes the NULL character
-		GLchar *errorLog = new GLchar[maxLength];
-		glGetShaderInfoLog(ray_shader, maxLength, &maxLength, &errorLog[0]);
-
-		//Error header
-		rvDebug.Log("Error compiling compute shader ", RV_ERROR_MESSAGE);
-
-		//Create message
-		string msg((const char*)errorLog);
-
-		//Pop last \0 char
-		msg.pop_back();
-
-		//Log Error through Debugger
-		rvDebug.Log(msg, Debug::Error);
-
-		//Don't leak the shader
-		glDeleteShader(ray_shader);
-	}
-	else
-	{
-		rvDebug.Log("Sucessfully compiled!\n");
-	}
-
-#pragma endregion
-
-	GLuint ray_program = glCreateProgram();
-	glAttachShader(ray_program, ray_shader);
-	glLinkProgram(ray_program);
-
-#pragma region Passing Rays Buffer to Shader
-	{
-		//Ortographic camera rays
-		Ray* rays = new Ray[width*height];
-		{
-			int rayId = 0;
-			float xStep = 2.0f / (width + 1), yStep = 2.0f / (height + 1);
-			float xPos = -1.0f + xStep, yPos = -1.0f + yStep;
-			for (size_t i = 0; i < height; i++)
-			{
-				for (size_t j = 0; j < width; j++)
-				{
-					rays[rayId].origin = { xPos, yPos, 0, 0 };
-					rays[rayId].dirAndId = { 0, 0, -1, (float)rayId };
-					rayId++;
-					xPos += xStep;
-				}
-				xPos = -1.0f + xStep;
-				yPos += yStep;
-			}
-		}
-
-		//Copy data to OpenGL
-		GLuint ssbo = 0;
-		glGenBuffers(1, &ssbo);
-		glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo);
-		glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(Ray) * width * height, rays, GL_DYNAMIC_COPY);
-
-		//Associate buffer index with binding point
-		GLuint ssbo_binding_point_index = 2;
-		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, ssbo_binding_point_index, ssbo);
-
-		//glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
-
-		//GLvoid* p = glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_WRITE_ONLY);
-		//memcpy(p, rays, sizeof(sizeof(Ray) * width * height));
-		//glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
-
-		//Get Shader Storage index from program
-		GLuint block_index = 0;
-		block_index = glGetProgramResourceIndex(ray_program, GL_SHADER_STORAGE_BLOCK, "rBuffer");
-		if (block_index == GL_INVALID_INDEX)
-			rvDebug.Log("rBuffer Storage Block couldn't be found on program with id " + to_string(ray_program));
-		rvDebug.Log("rBuffer Storage Block found at index " + to_string(block_index));
-
-
-		glShaderStorageBlockBinding(ray_program, block_index, ssbo_binding_point_index);
-		rvDebug.Log("rBuffer Storage Block binding is " + to_string(ssbo_binding_point_index));
-	}
-#pragma endregion
-
-#pragma region Passing Primitives Buffer to Shader
-	{
-		//Generate Primitives Information
-		Sphere spheres[] = {
-			//POS x		y	 z	  scale		COL r	g	b	coef	SPEC pow	coef
-			{ -15,	0,	-10,	1,			1,	0,	0,	0.8,		 50,	0.6 },
-			{ -10,	0,	-10,	2,			1,	0,	0,	0.8,		 50,	0.6 },
-			{ -5,	0,	-10,	1,			1,	0,	0,	0.8,		 50,	0.6 },
-			{ 0,	0,	-10,	1,			1,	0,	0,	0.8,		 50,	0.6 },
-			{ 5,	0,	-10,	1,			1,	0,	0,	0.8,		 50,	0.6 },
-			{ 10,	0,	-10,	2,			1,	0,	0,	0.8,		 50,	0.6 },
-			{ 15,	0,	-10,	1,			1,	0,	0,	0.8,		 50,	0.6 }
-		};
-
-		//Copy data to OpenGL
-		GLuint ssbo = 0;
-		glGenBuffers(1, &ssbo);
-		glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo);
-		glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(spheres), spheres, GL_DYNAMIC_COPY);
-
-		//Associate buffer index with binding point
-		GLuint ssbo_binding_point_index = 3;
-		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, ssbo_binding_point_index, ssbo);
-
-		//glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
-
-		//GLvoid* p = glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_WRITE_ONLY);
-		//memcpy(p, rays, sizeof(sizeof(Ray) * width * height));
-		//glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
-
-		//Get Shader Storage index from program
-		GLuint block_index = 0;
-		block_index = glGetProgramResourceIndex(ray_program, GL_SHADER_STORAGE_BLOCK, "sBuffer");
-		if (block_index == GL_INVALID_INDEX)
-			rvDebug.Log("sBuffer Storage Block couldn't be found on program with id " + to_string(ray_program));
-		rvDebug.Log("sBuffer Storage Block found at index " + to_string(block_index));
-
-
-		glShaderStorageBlockBinding(ray_program, block_index, ssbo_binding_point_index);
-		rvDebug.Log("sBuffer Storage Block binding is " + to_string(ssbo_binding_point_index));
-	}
-#pragma endregion
-
-	//FUUUN
-	GLint timeLoc = glGetUniformLocation(ray_program, "time");
-
 	while (!glfwWindowShouldClose(window))
 	{
 		_update_fps_counter(window);
 
-		//Lunch Compute Shader!
-		glUseProgram(ray_program);
-
-		//Update time variable
-		glUniform1f(timeLoc, glfwGetTime());
-		glDispatchCompute((GLuint)width, (GLuint)height, 1);
-
-		// make sure writing to image has finished before read
-		glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+		GLint raytracePreview = RayTracer::Compute(1);
 
 		//Clear back color and depth buffer
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -408,7 +209,7 @@ int App::Run()
 
 		//Texture binding
 		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, texture);
+		glBindTexture(GL_TEXTURE_2D, raytracePreview);
 
 		//Bind VAO
 		vao.Bind();

@@ -9,6 +9,6 @@ struct Ray
 
 struct RayHit
 {
-	glm_vec4 hit;		//Hit position
-	glm_vec4 norAndId;	//Normal ind packed ID
+	glm_vec4 hitAndWeight;	//Hit position and color weight
+	glm_vec4 norAndId;		//Normal ind packed ID
 };

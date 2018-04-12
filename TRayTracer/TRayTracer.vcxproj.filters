@@ -45,6 +45,9 @@
     <ClCompile Include="mFileLoader.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="gRayTracer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="App.h">
@@ -92,9 +95,15 @@
     <ClInclude Include="Primitives.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="gRayTracer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="bin\data\compute_shader.glcs">
+    <None Include="bin\data\collisionCompShader.glsl">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="bin\data\shadingCompShader.glsl">
       <Filter>Resource Files</Filter>
     </None>
   </ItemGroup>
