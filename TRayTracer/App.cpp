@@ -199,7 +199,9 @@ int App::Run()
 	{
 		_update_fps_counter(window);
 
+		//===============COMPUT RAYTRACING HERE====================
 		GLint raytracePreview = RayTracer::Compute(1);
+		//===============COMPUT RAYTRACING HERE====================
 
 		//Clear back color and depth buffer
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);

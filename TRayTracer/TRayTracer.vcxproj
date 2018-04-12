@@ -71,7 +71,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <TargetName>$(ProjectName)</TargetName>
     <OutDir>.\bin\</OutDir>
-    <IntDir>$(Configuration)\..\</IntDir>
+    <IntDir>$(Configuration)\</IntDir>
     <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
     <ExcludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(MSBuild_ExecutablePath);$(Configuration);$(VC_LibraryPath_x64);</ExcludePath>
   </PropertyGroup>
@@ -80,10 +80,10 @@
     <OutDir>.\bin\</OutDir>
     <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
     <ExcludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(MSBuild_ExecutablePath);$(Configuration);$(VC_LibraryPath_x86);</ExcludePath>
-    <IntDir>$(Configuration)\..\</IntDir>
+    <IntDir>$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <IntDir>$(Configuration)\..\</IntDir>
+    <IntDir>$(Configuration)\</IntDir>
     <OutDir>.\bin\</OutDir>
     <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
     <ExcludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(MSBuild_ExecutablePath);$(Configuration);$(VC_LibraryPath_x64);</ExcludePath>
@@ -93,7 +93,7 @@
     <TargetName>$(ProjectName) (x86)</TargetName>
     <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
     <ExcludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(MSBuild_ExecutablePath);$(Configuration);$(VC_LibraryPath_x86);</ExcludePath>
-    <IntDir>$(Configuration)\..\</IntDir>
+    <IntDir>$(Configuration)\</IntDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>

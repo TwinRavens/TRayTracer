@@ -13,22 +13,22 @@ struct Ray
 	vec4 dirAndId;
 };
 
-layout (std140, binding = 1) buffer rBuffer
+layout (std140) buffer rBuffer
 {
   Ray rays[];
-} RaysBlock;
+};
 
 struct Spheres
 {
 	vec4 posAndScale;
 	vec4 diffColAndCoef;
-	vec2 specPowAndCoef;
+	vec4 specPowAndCoef;
 };
 
-layout (std140, binding = 2) buffer sBuffer
+layout (std140) buffer sBuffer
 {
 	Spheres spheres[];
-} SpheresBlock;
+};
 
 //define light
 vec3 lightPos = vec3(0.0, 0.0, 0.0);
@@ -85,8 +85,8 @@ void main() {
 	int rayId = (pixel_coords.x+pixel_coords.y*dims.x);
 
 	//define camera points
-	vec3 cameraOrigin = vec3(RaysBlock.rays[rayId].origin.x * max_x, RaysBlock.rays[rayId].origin.y * max_y, 0.0);
-	vec3 cameraDir = RaysBlock.rays[rayId].dirAndId.xyz; // ortho
+	vec3 cameraOrigin = vec3(rays[rayId].origin.x * max_x, rays[rayId].origin.y * max_y, 0.0);
+	vec3 cameraDir = rays[rayId].dirAndId.xyz; // ortho
 
 	int indexClosestSphere = -1;
 	float closestDelta = 4294967296.0; 
@@ -94,9 +94,9 @@ void main() {
 	for(int i = 0; i < spheresCount; i++)
 	{
 		//define sphere
-		vec3 sphereCenter = SpheresBlock.spheres[i].posAndScale.xyz;
+		vec3 sphereCenter = spheres[i].posAndScale.xyz;
 		//vec3 sphereCenter = vec3(i * 5 - 15, sin(time + i*0.5f) * 3, -10.0);
-		float sphereRadius = SpheresBlock.spheres[i].posAndScale.w;
+		float sphereRadius = spheres[i].posAndScale.w;
 		//float sphereRadius = 1;
 
 		//region collision with sphere
@@ -116,9 +116,9 @@ void main() {
 	}
 
 	if(indexClosestSphere != -1) {
-		vec3 sphereCenter = SpheresBlock.spheres[indexClosestSphere].posAndScale.xyz;
+		vec3 sphereCenter = spheres[indexClosestSphere].posAndScale.xyz;
 		//vec3 sphereCenter = vec3(indexClosestSphere * 5 - 15, sin(time + indexClosestSphere*0.5f) * 3, -10.0);
-		float sphereRadius = 1.0;
+		float sphereRadius = spheres[indexClosestSphere].posAndScale.w;
 
 		vec3 hit = vec3(cameraOrigin.x + cameraDir.x * closestDelta, cameraOrigin.y + cameraDir.y * closestDelta, cameraOrigin.z + cameraDir.z * closestDelta);
 		vec3 normal = vec3((hit.x - sphereCenter.x)/sphereRadius,  (hit.y - sphereCenter.y)/sphereRadius, (hit.z - sphereCenter.z)/sphereRadius); 
@@ -127,5 +127,5 @@ void main() {
 	}
 
 	// output to a specific pixel in the image
-	imageStore(img_output, pixel_coords, vec4(SpheresBlock.spheres[0].diffColAndCoef.x));
+	imageStore(img_output, pixel_coords, pixel);
 }
