@@ -244,7 +244,7 @@ int App::Run()
 #pragma region Load Compute Shader
 	//Load Compute Shader
 	char* compute_shader;
-	rvLoadFile("compute_shader.glcs", compute_shader, true);
+	rvLoadFile("compute_shader.comp", compute_shader, true);
 
 	GLuint ray_shader = glCreateShader(GL_COMPUTE_SHADER);
 	glShaderSource(ray_shader, 1, &compute_shader, NULL);
