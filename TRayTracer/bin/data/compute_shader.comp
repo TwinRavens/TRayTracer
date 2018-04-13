@@ -37,10 +37,10 @@ vec4 lightColor = vec4(1.0, 1.0, 1.0, 1.0);
 //recursion variables
 Ray rayStack[20];
 float rayContribution[20];
-int maxReflectionDepth;
-int maxRefractionDepth;
+int maxReflectionDepth = 2;
+int maxRefractionDepth = 1;
 
-vec4 shade(vec3 point, vec3 normal, vec3 viewDir) {
+vec4 shade(vec3 point, vec3 normal, vec3 viewDir, int index) {
 
 		//ambient
 		float ka = 0.2;  //coeficient of ambient light
@@ -50,7 +50,8 @@ vec4 shade(vec3 point, vec3 normal, vec3 viewDir) {
 
 		//diffuse
 		float kd = 0.8; // coeficient of diffuse light
-		vec4 diffuseColor = vec4(1.0, 0.0, 0.0, 1.0); // color from the object
+		index -=3;
+		vec4 diffuseColor = vec4(index/3.0f, index%2, sin(index/3), 1.0); // color from the object
 
 		vec3 lightDir = normalize(lightPos - point);
 		float diffuse = clamp(dot(lightDir, normal), 0, 1);
@@ -95,6 +96,7 @@ void main() {
 
 	//start stack
 	int cRay = -1;
+	int cReflectionDepth = 0;
 	//input ray into stack
 	cRay++; // stack push
 	rayStack[cRay] = Ray(vec4(RaysBlock.rays[rayId].origin.x * max_x, RaysBlock.rays[rayId].origin.y * max_y, 0.0, 0.0), RaysBlock.rays[rayId].dirAndId);
@@ -146,8 +148,34 @@ void main() {
 
 			vec3 hit = vec3(cameraOrigin.x + cameraDir.x * closestDelta, cameraOrigin.y + cameraDir.y * closestDelta, cameraOrigin.z + cameraDir.z * closestDelta);
 			vec3 normal = vec3((hit.x - sphereCenter.x)/sphereRadius,  (hit.y - sphereCenter.y)/sphereRadius, (hit.z - sphereCenter.z)/sphereRadius); 
+			normal = normalize(normal);
 
-			pixel = shade(hit, normal, cameraDir);
+			if(cReflectionDepth < maxReflectionDepth) 
+			{
+				cReflectionDepth++;
+
+				//create reflection ray
+				//Rout	=	2N	(N.Rin) - Rin
+				//float angle = dot(cameraDir,normal);
+				//vec3 rayDir = 2 * normal * angle - cameraDir;
+			
+				//we use + and -1* because Rin should be ray from hit to casting point and the one we have is the opposite
+				float angle = -1 * dot(cameraDir,normal);
+				vec3 rayDir = 2 * normal * angle + cameraDir;
+
+				//debug rayDir
+				//rayDir = (rayDir + 1)/2.0f;
+				//pixel = vec4(rayDir, 1);
+
+				//push ray into stack
+				cRay++; 
+				rayStack[cRay] = Ray(vec4(hit,0), vec4(rayDir,1));
+				rayContribution[cRay] = 0.3; //get reflection from material
+			}
+
+
+			// shading
+			pixel += shade(hit, normal, cameraDir,indexClosestSphere) * contribution;
 		}
 
 	}
