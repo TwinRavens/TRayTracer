@@ -22,7 +22,7 @@ struct Spheres
 {
 	vec4 posAndScale;
 	vec4 diffColAndCoef;
-	vec2 specPowAndCoef;
+	vec4 specPowAndCoef;
 };
 
 layout (std140) buffer sBuffer
@@ -48,17 +48,16 @@ vec4 shade(vec3 point, vec3 normal, vec3 viewDir, int index) {
 
 
 		//diffuse
-		float kd = 0.8; // coeficient of diffuse light
-		index -=3;
-		vec4 diffuseColor = vec4(index/3.0f, index%2, sin(index/3), 1.0); // color from the object
+		float kd = SpheresBlock.spheres[index].diffColAndCoef.w; // coeficient of diffuse light
+		vec4 diffuseColor = vec4(SpheresBlock.spheres[index].diffColAndCoef.xyz, 1.0); // color from the object
 
 		vec3 lightDir = normalize(lightPos - point);
 		float diffuse = clamp(dot(lightDir, normal), 0, 1);
 		vec4 id = kd * diffuse * diffuseColor * lightColor;
 
 		//specular TODO:review this
-		float ks = 0.6;
-		float specullarPower = 50;
+		float ks = SpheresBlock.spheres[index].specPowAndCoef.y;
+		float specullarPower = SpheresBlock.spheres[index].specPowAndCoef.x;
 
 		//Reflect = lightDir - 2 * normal * dot(normal, lightDir)
 		//OR normalize(2 * normal * dot(normal, lightDir) - lightDir) when the ray came from the light source 
@@ -141,7 +140,7 @@ void main() {
 		if(indexClosestSphere != -1) {
 			vec3 sphereCenter = SpheresBlock.spheres[indexClosestSphere].posAndScale.xyz;
 			//vec3 sphereCenter = vec3(indexClosestSphere * 5 - 15, sin(time + indexClosestSphere*0.5f) * 3, -10.0);
-			float sphereRadius = 1.0;
+			float sphereRadius = SpheresBlock.spheres[indexClosestSphere].posAndScale.w;
 
 			vec3 hit = vec3(cameraOrigin.x + cameraDir.x * closestDelta, cameraOrigin.y + cameraDir.y * closestDelta, cameraOrigin.z + cameraDir.z * closestDelta);
 			vec3 normal = vec3((hit.x - sphereCenter.x)/sphereRadius,  (hit.y - sphereCenter.y)/sphereRadius, (hit.z - sphereCenter.z)/sphereRadius); 
@@ -149,31 +148,37 @@ void main() {
 
 			if(cDepth < maxDepth) 
 			{
-//				depthTest++;
 				cDepth++;
-				//create reflection ray
+				////create reflection ray
+
 				//Rout	=	2N	(N.Rin) - Rin
 				//we use + and -1* because Rin should be ray from hit to casting point and the one we have is the opposite
-				float angle = -1 * dot(cameraDir,normal);
-				vec3 rayDir = 2 * normal * angle + cameraDir;
+				//float angle = -1 * dot(cameraDir,normal);
+				//vec3 reflectedRayDir = 2 * normal * angle + cameraDir;
+				//reflectedRayDir = normalize(reflectedRayDir);
 
-				rayDir = normalize(rayDir);
-
-				//debug rayDir
-				//rayDir = (rayDir + 1)/2.0f;
-				//pixel = vec4(rayDir, 1);
+				vec3 reflectedRayDir = reflect(cameraDir, normal);
 
 				//push ray into stack
 				cRay++; 
-				rayStack[cRay] = Ray(vec4(hit,cDepth), vec4(rayDir,1));
+				rayStack[cRay] = Ray(vec4(hit,cDepth), vec4(reflectedRayDir,1));
 				rayContribution[cRay] = 0.3 * contribution; //get reflection from material
 
-				//Refraction
+//				////Refraction
+//				float n1 = 1;
+//				float n2 = 1.3;
+//				vec3 refractRayDir = refract(cameraDir, normal, n1/n2);
+//
+//				//push ray into stack
+//				cRay++; 
+//				rayStack[cRay] = Ray(vec4(hit,cDepth), vec4(refractRayDir,1));
+//				rayContribution[cRay] = 0.3 * contribution; //get reflection from material
+
 			}
 
 
 			// shading
-			pixel += shade(hit, normal, cameraDir,indexClosestSphere) * contribution;
+			pixel += shade(hit, normal, cameraDir, indexClosestSphere) * contribution;
 		}
 
 	}

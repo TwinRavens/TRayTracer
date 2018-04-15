@@ -330,7 +330,7 @@ int App::Run()
 				{
 					float x = (2 * (i + 0.5) / (float)width - 1) * aspectRatio * fovScale;
 					float y = (1 - 2 * (j + 0.5) / (float)height) * fovScale;
-					glm::vec3 dir = {x,y,-1};
+					glm::vec3 dir = { x,y,-1 };
 					//cameraToWorld.multDirMatrix(Vec3f(x, y, -1), dir);
 					dir = glm::normalize(dir);
 
@@ -376,13 +376,13 @@ int App::Run()
 		//Generate Primitives Information
 		Sphere spheres[] = {
 			//POS x		y	 z	  scale		COL r	g	b	coef	SPEC pow	coef
-			{ -15,	0,	-10,	1,			1,	0,	0,	0.8,		 50,	0.6 },
-			{ -10,	0,	-10,	2,			1,	0,	0,	0.8,		 50,	0.6 },
-			{ -5,	0,	-10,	1,			1,	0,	0,	0.8,		 50,	0.6 },
-			{ 0,	0,	-10,	1,			1,	0,	0,	0.8,		 50,	0.6 },
-			{ 5,	0,	-10,	1,			1,	0,	0,	0.8,		 50,	0.6 },
-			{ 10,	0,	-10,	2,			1,	0,	0,	0.8,		 50,	0.6 },
-			{ 15,	0,	-10,	1,			1,	0,	0,	0.8,		 50,	0.6 }
+			{ 13,	6,	-15,	1,		1,	0,	0,	0.8,		 50,	0.6 },
+			{ -13,	-10,-20,	5,		1,	0,	0,	0.8,		 50,	0.6 },
+			{ -5,	2,	-10,	1,		1,	0,	0,	0.8,		 50,	0.6 },
+			{ 0,	3,	-15,	1,		1,	0,	0,	0.8,		 50,	0.6 },
+			{ 7,	0,	-10,	1,		1,	0,	0,	0.8,		 50,	0.6 },
+			{ 10,	-3,	-5,		1,		1,	0,	0,	0.8,		 50,	0.6 },
+			{ 13,	6,	-10,	4,		1,	0,	0,	0.8,		 50,	0.6 },
 		};
 
 		//Copy data to OpenGL
