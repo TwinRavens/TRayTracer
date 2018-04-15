@@ -4,7 +4,7 @@ layout(local_size_x = 1, local_size_y = 1) in;
 layout(rgba32f, binding = 0) uniform image2D img_output;
 
 uniform float time;
-uniform int spheresCount = 7;
+uniform int spheresCount;
 uniform vec4 ambientColour;
 
 struct Ray
