@@ -37,8 +37,7 @@ vec4 lightColor = vec4(1.0, 1.0, 1.0, 1.0);
 //recursion variables
 Ray rayStack[20];
 float rayContribution[20];
-int maxReflectionDepth = 2;
-int maxRefractionDepth = 1;
+int maxDepth = 2;
 
 vec4 shade(vec3 point, vec3 normal, vec3 viewDir, int index) {
 
@@ -96,14 +95,11 @@ void main() {
 
 	//start stack
 	int cRay = -1;
-	int cReflectionDepth = 0;
 	//input ray into stack
 	cRay++; // stack push
 	rayStack[cRay] = Ray(vec4(RaysBlock.rays[rayId].origin.x * max_x, RaysBlock.rays[rayId].origin.y * max_y, RaysBlock.rays[rayId].origin.z, 0.0), RaysBlock.rays[rayId].dirAndId);
 	rayContribution[cRay] = 1;
 
-	//vec3 cameraOrigin = vec3(RaysBlock.rays[rayId].origin.x * max_x, RaysBlock.rays[rayId].origin.y * max_y, 0.0);
-	//vec3 cameraDir = RaysBlock.rays[rayId].dirAndId.xyz; // ortho
 
 	while(cRay != -1) 
 	{
@@ -111,6 +107,7 @@ void main() {
 		vec3 cameraOrigin = rayStack[cRay].origin.xyz;
 		vec3 cameraDir = rayStack[cRay].dirAndId.xyz; // ortho
 		float contribution = rayContribution[cRay];
+		float cDepth = rayStack[cRay].origin.w;
 
 		cRay--; //stack pop
 
@@ -150,18 +147,17 @@ void main() {
 			vec3 normal = vec3((hit.x - sphereCenter.x)/sphereRadius,  (hit.y - sphereCenter.y)/sphereRadius, (hit.z - sphereCenter.z)/sphereRadius); 
 			normal = normalize(normal);
 
-			if(cReflectionDepth < maxReflectionDepth) 
+			if(cDepth < maxDepth) 
 			{
-				cReflectionDepth++;
-
+//				depthTest++;
+				cDepth++;
 				//create reflection ray
 				//Rout	=	2N	(N.Rin) - Rin
-				//float angle = dot(cameraDir,normal);
-				//vec3 rayDir = 2 * normal * angle - cameraDir;
-			
 				//we use + and -1* because Rin should be ray from hit to casting point and the one we have is the opposite
 				float angle = -1 * dot(cameraDir,normal);
 				vec3 rayDir = 2 * normal * angle + cameraDir;
+
+				rayDir = normalize(rayDir);
 
 				//debug rayDir
 				//rayDir = (rayDir + 1)/2.0f;
@@ -169,8 +165,10 @@ void main() {
 
 				//push ray into stack
 				cRay++; 
-				rayStack[cRay] = Ray(vec4(hit,0), vec4(rayDir,1));
-				rayContribution[cRay] = 0.3; //get reflection from material
+				rayStack[cRay] = Ray(vec4(hit,cDepth), vec4(rayDir,1));
+				rayContribution[cRay] = 0.3 * contribution; //get reflection from material
+
+				//Refraction
 			}
 
 
