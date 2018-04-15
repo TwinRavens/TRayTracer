@@ -99,7 +99,7 @@ void main() {
 	int cReflectionDepth = 0;
 	//input ray into stack
 	cRay++; // stack push
-	rayStack[cRay] = Ray(vec4(RaysBlock.rays[rayId].origin.x * max_x, RaysBlock.rays[rayId].origin.y * max_y, 0.0, 0.0), RaysBlock.rays[rayId].dirAndId);
+	rayStack[cRay] = Ray(vec4(RaysBlock.rays[rayId].origin.x * max_x, RaysBlock.rays[rayId].origin.y * max_y, RaysBlock.rays[rayId].origin.z, 0.0), RaysBlock.rays[rayId].dirAndId);
 	rayContribution[cRay] = 1;
 
 	//vec3 cameraOrigin = vec3(RaysBlock.rays[rayId].origin.x * max_x, RaysBlock.rays[rayId].origin.y * max_y, 0.0);
