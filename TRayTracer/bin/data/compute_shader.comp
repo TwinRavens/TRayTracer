@@ -4,7 +4,7 @@ layout(local_size_x = 1, local_size_y = 1) in;
 layout(rgba32f, binding = 0) uniform image2D img_output;
 
 uniform float time;
-uniform int spheresCount = 7;
+uniform int spheresCount = 8;
 uniform vec4 ambientColour;
 
 struct Ray
@@ -42,7 +42,7 @@ int maxDepth = 2;
 vec4 shade(vec3 point, vec3 normal, vec3 viewDir, int index) {
 
 		//ambient
-		float ka = 0.2;  //coeficient of ambient light
+		float ka = 0.1;  //coeficient of ambient light
 		vec4 color = vec4(1.0, 1.0, 1.0, 1.0); //color of ambient light
 		vec4 ia = color * ka;
 
@@ -55,17 +55,19 @@ vec4 shade(vec3 point, vec3 normal, vec3 viewDir, int index) {
 		float diffuse = clamp(dot(lightDir, normal), 0, 1);
 		vec4 id = kd * diffuse * diffuseColor * lightColor;
 
-		//specular TODO:review this
+		//specular 
 		float ks = SpheresBlock.spheres[index].specPowAndCoef.y;
 		float specullarPower = SpheresBlock.spheres[index].specPowAndCoef.x;
 
 		//Reflect = lightDir - 2 * normal * dot(normal, lightDir)
 		//OR normalize(2 * normal * dot(normal, lightDir) - lightDir) when the ray came from the light source 
-		vec3 reflect = normalize(lightDir - 2 * normal * diffuse);
-		float specular = clamp(abs(pow(dot(reflect, viewDir), specullarPower)), 0, 1);
+		vec3 reflection = normalize(lightDir - 2 * normal * diffuse);
+//		vec3 reflection = reflect(lightDir, normal);
+		float specular = clamp(abs(pow(dot(reflection, viewDir), specullarPower)), 0, 1);
 		
 		vec4 is = ks * specular * lightColor;
 
+//		return vec4(diffuse); 
 		return (ia + id + is);
 }
 
@@ -104,7 +106,7 @@ void main() {
 	{
 		//define camera points
 		vec3 cameraOrigin = rayStack[cRay].origin.xyz;
-		vec3 cameraDir = rayStack[cRay].dirAndId.xyz; // ortho
+		vec3 cameraDir = rayStack[cRay].dirAndId.xyz;
 		float contribution = rayContribution[cRay];
 		float cDepth = rayStack[cRay].origin.w;
 
@@ -164,15 +166,15 @@ void main() {
 				rayStack[cRay] = Ray(vec4(hit,cDepth), vec4(reflectedRayDir,1));
 				rayContribution[cRay] = 0.3 * contribution; //get reflection from material
 
-//				////Refraction
-//				float n1 = 1;
-//				float n2 = 1.3;
-//				vec3 refractRayDir = refract(cameraDir, normal, n1/n2);
-//
-//				//push ray into stack
-//				cRay++; 
-//				rayStack[cRay] = Ray(vec4(hit,cDepth), vec4(refractRayDir,1));
-//				rayContribution[cRay] = 0.3 * contribution; //get reflection from material
+				////Refraction
+				float n1 = 1;
+				float n2 = 1.3;
+				vec3 refractRayDir = refract(cameraDir, normal, n1/n2);
+
+				//push ray into stack
+				cRay++; 
+				rayStack[cRay] = Ray(vec4(hit,cDepth), vec4(refractRayDir,1));
+				rayContribution[cRay] = 0.3 * contribution; //get reflection from material
 
 			}
 
