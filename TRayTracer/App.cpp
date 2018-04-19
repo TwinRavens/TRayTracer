@@ -111,25 +111,6 @@ int App::Initialize(cint &width, cint &height, str name, bool fullscreen)
 
 int App::Run()
 {
-	float points[] = {
-		//Position			  //UV
-   -1.0f, -1.0f,  0.0f,	0.0f,  0.0f, //Bottom left
-	1.0f,  1.0f,  0.0f,	1.0f,  1.0f, //Top-right
-   -1.0f,  1.0f,  0.0f,	0.0f,  1.0f, //Top-left
-   -1.0f, -1.0f,  0.0f,	0.0f,  0.0f, //Bottom-left
-	1.0f, -1.0f,  0.0f,	1.0f,  0.0f, //Bottom-right
-	1.0f,  1.0f,  0.0f,	1.0f,  1.0f  //Top-right
-	};
-
-
-	//Identity Matrix
-	float matrix[] = {
-		1, 0, 0, 0,
-		0, 1, 0, 0,
-		0, 0, 1, 0,
-		0, 0, 0, 1
-	};
-
 	char* vertex_shader;
 	rvLoadFile("vertex_uv.vs", vertex_shader, true);
 
@@ -147,6 +128,27 @@ int App::Run()
 	rvLinkProgram(pr);											//Link program
 	GLint vp_loc = rvGetAttributeLoc(pr, "vertex_position");	//Get attribute location (after linking!)
 	GLint vc_loc = rvGetAttributeLoc(pr, "vertex_coords");		//Get attribute location (after linking!)
+
+#pragma region ScreenQuad Generation
+
+	float points[] = {
+		//Position			  //UV
+		-1.0f, -1.0f,  0.0f,	0.0f,  0.0f, //Bottom left
+		1.0f,  1.0f,  0.0f,	1.0f,  1.0f, //Top-right
+		-1.0f,  1.0f,  0.0f,	0.0f,  1.0f, //Top-left
+		-1.0f, -1.0f,  0.0f,	0.0f,  0.0f, //Bottom-left
+		1.0f, -1.0f,  0.0f,	1.0f,  0.0f, //Bottom-right
+		1.0f,  1.0f,  0.0f,	1.0f,  1.0f  //Top-right
+	};
+
+
+	//Identity Matrix
+	float matrix[] = {
+		1, 0, 0, 0,
+		0, 1, 0, 0,
+		0, 0, 1, 0,
+		0, 0, 0, 1
+	};
 
 	//Create VertexBuffer Object
 	VertexBuffer vbo;
@@ -181,6 +183,8 @@ int App::Run()
 	//Use VBO for setting data pointers
 	vbo.SetAttributePointers();
 
+#pragma endregion
+
 	////Load texture with STB Image
 	//int width, height, nrChannels;
 	//unsigned char *data = stbi_load("container.jpg", &width, &height, &nrChannels, 0);
@@ -203,6 +207,8 @@ int App::Run()
 		GLint raytracePreview = RayTracer::Compute(1);
 		//===============COMPUT RAYTRACING HERE====================
 
+#pragma region Draw Raytracer Output
+
 		//Clear back color and depth buffer
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -218,6 +224,8 @@ int App::Run()
 
 		//Draw given VBO
 		vbo.Draw();
+
+#pragma endregion
 
 		//Swap front and back buffers
 		glfwSwapBuffers(window);

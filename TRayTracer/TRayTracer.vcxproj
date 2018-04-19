@@ -169,6 +169,7 @@
     <ClInclude Include="Common.h" />
     <ClInclude Include="Debug.h" />
     <ClInclude Include="gRayTracer.h" />
+    <ClInclude Include="Material.h" />
     <ClInclude Include="Math.h" />
     <ClInclude Include="Mesh.h" />
     <ClInclude Include="gShader.h" />
@@ -183,14 +184,14 @@
     <ClInclude Include="stb_image.h" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="bin\data\collisionCompShader.glsl">
-	  <FileType>Document</FileType>
-    </None>
-    <None Include="bin\data\shadingCompShader.glsl">
-	  <FileType>Document</FileType>
-    </None>
     <None Include="bin\data\compute_shader.comp">
       <FileType>Document</FileType>
+    </None>
+    <None Include="bin\data\collisionPass.comp">
+	  <FileType>Document</FileType>
+    </None>
+    <None Include="bin\data\shadingPass.comp">
+	  <FileType>Document</FileType>
     </None>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

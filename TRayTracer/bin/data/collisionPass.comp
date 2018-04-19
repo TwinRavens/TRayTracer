@@ -9,7 +9,7 @@ uniform vec4 ambientColour;
 
 struct Ray
 {
-	vec4 origin;
+	vec4 origAndWght;
 	vec4 dirAndId;
 };
 
@@ -21,13 +21,28 @@ layout (std140) buffer rBuffer
 struct Spheres
 {
 	vec4 posAndScale;
-	vec4 diffColAndCoef;
-	vec4 specPowAndCoef;
+	vec4 diffColAlpha;
+	vec4 specDiffAmbiCoefShinness;
+	vec4 refrIndexReflCoef;
 };
 
 layout (std140) buffer sBuffer
 {
 	Spheres spheres[];
+};
+
+struct RayHit
+{
+	vec4 hitAndWeight;
+	vec4 norAndId;
+	int objId;
+	int objTypeId;
+	float p1, p2; //PADDING
+};
+
+layout (std140) buffer rHitBuffer
+{
+	RayHit hits[];
 };
 
 //define light
@@ -87,11 +102,11 @@ void main()
 	int rayId = (pixel_coords.x+pixel_coords.y*dims.x);
 
 	//define camera points
-	vec3 cameraOrigin = vec3(rays[rayId].origin.x * max_x, rays[rayId].origin.y * max_y, 0.0);
+	vec3 cameraOrigin = rays[rayId].origAndWght.xyz;
 	vec3 cameraDir = rays[rayId].dirAndId.xyz; // ortho
 
 	int indexClosestSphere = -1;
-	float closestDelta = 4294967296.0; 
+	float closestDelta = 4294967296.0;
 
 	for(int i = 0; i < spheresCount; i++)
 	{
@@ -124,6 +139,9 @@ void main()
 
 		vec3 hit = vec3(cameraOrigin.x + cameraDir.x * closestDelta, cameraOrigin.y + cameraDir.y * closestDelta, cameraOrigin.z + cameraDir.z * closestDelta);
 		vec3 normal = vec3((hit.x - sphereCenter.x)/sphereRadius,  (hit.y - sphereCenter.y)/sphereRadius, (hit.z - sphereCenter.z)/sphereRadius); 
+		normal = normalize(normal);
+
+
 
 		pixel = shade(hit, normal, cameraDir);
 	}

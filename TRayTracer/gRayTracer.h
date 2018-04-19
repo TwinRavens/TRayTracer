@@ -32,7 +32,7 @@ namespace rav
 		static GLuint frontBuffer, backBuffer;
 
 		//Shader Storage Buffer Objects
-		static GLuint raysBuffer;
+		static GLuint raysBuffer, reyHitsBuffer;
 
 		//Rays generation
 		static GLint generateRays();

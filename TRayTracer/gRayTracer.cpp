@@ -6,6 +6,8 @@ GLint rav::RayTracer::collisionProgram, rav::RayTracer::shadingProgram;
 
 GLint rav::RayTracer::generateRays()
 {
+#pragma region Input Rays
+
 #if ORTOGRAPHIC
 	//Ortographic camera rays
 	Ray* rays = new Ray[width*height];
@@ -34,7 +36,7 @@ GLint rav::RayTracer::generateRays()
 		float fovScale = tan(glm::radians(fov * 0.5));
 		//glm::vec3 origin = { 0, 0, 0 };
 		//cameraToWorld.multVecMatrix(Vec3f(0), origin);  
-		glm_vec4 origin = { 0, 0, 20 };
+		glm_vec4 origin = { 0, 0, 20, 1 };
 
 		int rayId = 0;
 		for (size_t j = 0; j < height; j++)
@@ -47,14 +49,13 @@ GLint rav::RayTracer::generateRays()
 				//cameraToWorld.multDirMatrix(Vec3f(x, y, -1), dir);
 				dir = glm::normalize(dir);
 
-				rays[rayId].origin = origin;
-				rays[rayId].dirAndId = { dir.x, dir.y, dir.z, (float)rayId };
+				rays[rayId].origAndWght = origin;
+				rays[rayId].dirAndId = { dir.x, dir.y, dir.z, *reinterpret_cast<float*>(&rayId) };
 				rayId++;
 			}
 		}
 	}
 #endif
-
 
 	//Copy data to OpenGL
 	glGenBuffers(1, &raysBuffer);
@@ -81,6 +82,39 @@ GLint rav::RayTracer::generateRays()
 	glShaderStorageBlockBinding(collisionProgram, block_index, ssbo_binding_point_index);
 	rvDebug.Log("rBuffer Storage Block binding is " + to_string(ssbo_binding_point_index));
 
+#pragma endregion
+
+#pragma region Output RayHits
+
+	RayHit* rayHits = new RayHit[width*height];
+
+	//Copy data to OpenGL
+	glGenBuffers(1, &reyHitsBuffer);
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, reyHitsBuffer);
+	glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(RayHit) * width * height, rayHits, GL_DYNAMIC_COPY);
+
+	//Bind buffer base to mapping
+	GLuint ssbo_binding_point_index = 2;
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, ssbo_binding_point_index, reyHitsBuffer);
+
+	//Get Shader Storage index from program
+	GLuint block_index = 0;
+	block_index = glGetProgramResourceIndex(collisionProgram, GL_SHADER_STORAGE_BLOCK, "rHitBuffer");
+	if (block_index == GL_INVALID_INDEX)
+	{
+		rvDebug.Log("rBuffer Storage Block couldn't be found on program with id " + to_string(collisionProgram));
+
+		//Return error code
+		return 1;
+	}
+	rvDebug.Log("rBuffer Storage Block found at index " + to_string(block_index));
+
+	//Associate buffer index with binding point
+	glShaderStorageBlockBinding(collisionProgram, block_index, ssbo_binding_point_index);
+	rvDebug.Log("rBuffer Storage Block binding is " + to_string(ssbo_binding_point_index));
+
+#pragma endregion
+
 	return 0;
 }
 
@@ -91,7 +125,7 @@ GLint rav::RayTracer::loadPrograms()
 	{
 		//Load Compute Shader
 		char* compute_shader;
-		rvLoadFile("collisionCompShader.glsl", compute_shader, true);
+		rvLoadFile("collisionPass.comp", compute_shader, true);
 
 		GLuint col_shader = glCreateShader(GL_COMPUTE_SHADER);
 		glShaderSource(col_shader, 1, &compute_shader, NULL);
@@ -142,57 +176,57 @@ GLint rav::RayTracer::loadPrograms()
 #pragma endregion
 
 #pragma region Load Shading Pass Shader
-	{
-		//Load Compute Shader
-		char* compute_shader;
-		rvLoadFile("shadingCompShader.glsl", compute_shader, true);
+	//{
+	//	//Load Compute Shader
+	//	char* compute_shader;
+	//	rvLoadFile("shadingCompShader.glsl", compute_shader, true);
 
-		GLuint shad_shader = glCreateShader(GL_COMPUTE_SHADER);
-		glShaderSource(shad_shader, 1, &compute_shader, NULL);
-		glCompileShader(shad_shader);
+	//	GLuint shad_shader = glCreateShader(GL_COMPUTE_SHADER);
+	//	glShaderSource(shad_shader, 1, &compute_shader, NULL);
+	//	glCompileShader(shad_shader);
 
-		GLint isCompiled = 0;
-		glGetShaderiv(shad_shader, GL_COMPILE_STATUS, &isCompiled);
+	//	GLint isCompiled = 0;
+	//	glGetShaderiv(shad_shader, GL_COMPILE_STATUS, &isCompiled);
 
-		//If got an error
-		if (isCompiled == GL_FALSE)
-		{
-			//Get size of info log
-			GLint maxLength = 0;
-			glGetShaderiv(shad_shader, GL_INFO_LOG_LENGTH, &maxLength);
+	//	//If got an error
+	//	if (isCompiled == GL_FALSE)
+	//	{
+	//		//Get size of info log
+	//		GLint maxLength = 0;
+	//		glGetShaderiv(shad_shader, GL_INFO_LOG_LENGTH, &maxLength);
 
-			//The maxLength includes the NULL character
-			GLchar *errorLog = new GLchar[maxLength];
-			glGetShaderInfoLog(shad_shader, maxLength, &maxLength, &errorLog[0]);
+	//		//The maxLength includes the NULL character
+	//		GLchar *errorLog = new GLchar[maxLength];
+	//		glGetShaderInfoLog(shad_shader, maxLength, &maxLength, &errorLog[0]);
 
-			//Error header
-			rvDebug.Log("Error compiling shading pass shader ", RV_ERROR_MESSAGE);
+	//		//Error header
+	//		rvDebug.Log("Error compiling shading pass shader ", RV_ERROR_MESSAGE);
 
-			//Create message
-			string msg((const char*)errorLog);
+	//		//Create message
+	//		string msg((const char*)errorLog);
 
-			//Pop last \0 char
-			msg.pop_back();
+	//		//Pop last \0 char
+	//		msg.pop_back();
 
-			//Log Error through Debugger
-			rvDebug.Log(msg, Debug::Error);
+	//		//Log Error through Debugger
+	//		rvDebug.Log(msg, Debug::Error);
 
-			//Don't leak the shader
-			glDeleteShader(shad_shader);
+	//		//Don't leak the shader
+	//		glDeleteShader(shad_shader);
 
-			//Return error code
-			return 2;
-		}
-		else
-		{
-			rvDebug.Log("Sucessfully compiled shading shader!\n");
-		}
+	//		//Return error code
+	//		return 2;
+	//	}
+	//	else
+	//	{
+	//		rvDebug.Log("Sucessfully compiled shading shader!\n");
+	//	}
 
-		//Link program
-		shadingProgram = glCreateProgram();
-		glAttachShader(shadingProgram, shad_shader);
-		glLinkProgram(shadingProgram);
-	}
+	//	//Link program
+	//	shadingProgram = glCreateProgram();
+	//	glAttachShader(shadingProgram, shad_shader);
+	//	glLinkProgram(shadingProgram);
+	//}
 #pragma endregion
 
 	//Return no error code
@@ -257,14 +291,14 @@ GLint rav::RayTracer::Setup(int width, int height)
 	{
 		//Generate Primitives Information
 		Sphere spheres[] = {
-			//POS x		y	 z	  scale		COL r	g	b	coef	SPEC pow	coef
-			{	-15,	0,	-10,	1,			1,	0,	0,	0.8,		 50,	0.6 },
-			{	-10,	0,	-10,	2,			1,	0,	0,	0.8,		 50,	0.6 },
-			{	 -5,	0,	-10,	1,			1,	0,	0,	0.8,		 50,	0.6 },
-			{	  0,	0,	-10,	1,			1,	0,	0,	0.8,		 50,	0.6 },
-			{	  5,	0,	-10,	1,			1,	0,	0,	0.8,		 50,	0.6 },
-			{	 10,	0,	-10,	2,			1,	0,	0,	0.8,		 50,	0.6 },
-			{	 15,	0,	-10,	1,			1,	0,	0,	0.8,		 50,	0.6 }
+			//POS x		y	 z	  scale		COL r	g	b	alpha	spec	diff	ambient	coef	shinness	refrac_index	reflaction
+			{	-15,	0,	-10,	1,			1,	0,	0,	1.0,	0.8,	0.8,	1.0,			50,			1.0,			0.3 },
+			{	-10,	0,	-10,	2,			1,	0,	0,	1.0,	0.8,	0.8,	1.0,			50,			1.0,			0.3 },
+			{	 -5,	0,	-10,	1,			1,	0,	0,	1.0,	0.8,	0.8,	1.0,			50,			1.0,			0.3 },
+			{	  0,	0,	-10,	1,			1,	0,	0,	1.0,	0.8,	0.8,	1.0,			50,			1.0,			0.3 },
+			{	  5,	0,	-10,	1,			1,	0,	0,	1.0,	0.8,	0.8,	1.0,			50,			1.0,			0.3 },
+			{	 10,	0,	-10,	2,			1,	0,	0,	1.0,	0.8,	0.8,	1.0,			50,			1.0,			0.3 },
+			{	 15,	0,	-10,	1,			1,	0,	0,	1.0,	0.8,	0.8,	1.0,			50,			1.0,			0.3 }
 		};
 
 		//Copy data to OpenGL

@@ -98,15 +98,18 @@
     <ClInclude Include="gRayTracer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Material.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="bin\data\collisionCompShader.glsl">
+    <None Include="bin\data\collisionPass.comp">
       <Filter>Resource Files</Filter>
     </None>
-    <None Include="bin\data\shadingCompShader.glsl">
-	 <Filter>Resource Files</Filter>
-    </None>
     <None Include="bin\data\compute_shader.comp">
+	  <Filter>Resource Files</Filter>
+    </None>
+    <None Include="bin\data\shadingPass.comp">
       <Filter>Resource Files</Filter>
     </None>
   </ItemGroup>
