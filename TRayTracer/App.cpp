@@ -156,7 +156,7 @@ int App::Run()
 		false,						//Not normalized
 		sizeof(float) * 5,			//Size of buffer block per vertex (3 for XYZ and 2 for UV)
 		(void*)(0 * sizeof(float))	//Stride of 0 bytes (starts at the beginning of the block)
-		});
+	});
 	vbo.AddBufferDescriptor({		//Vertex UV Attribute
 		vc_loc,						//Location ID
 		2,							//Size of attribute (2 = UV)
@@ -164,7 +164,7 @@ int App::Run()
 		false,						//Not normalized
 		sizeof(float) * 5,			//Size of buffer block per vertex (3 for XYZ and 2 for UV)
 		(void*)(3 * sizeof(float))	//Stride of 3 bytes (starts 3 bytes away from the beginning of the block)
-		});
+	});
 
 	//Copy data to VertexBuffer Object
 	vbo.Fill(sizeof(points), points);
@@ -244,7 +244,7 @@ int App::Run()
 #pragma region Load Compute Shader
 	//Load Compute Shader
 	char* compute_shader;
-	rvLoadFile("compute_shader.glcs", compute_shader, true);
+	rvLoadFile("compute_shader.comp", compute_shader, true);
 
 	GLuint ray_shader = glCreateShader(GL_COMPUTE_SHADER);
 	glShaderSource(ray_shader, 1, &compute_shader, NULL);
@@ -291,6 +291,8 @@ int App::Run()
 
 #pragma region Passing Rays Buffer to Shader
 	{
+
+#if false //Ortographic camera rays
 		//Ortographic camera rays
 		Ray* rays = new Ray[width*height];
 		{
@@ -310,6 +312,35 @@ int App::Run()
 				yPos += yStep;
 			}
 		}
+#else //Perspective
+		//Perspective
+		Ray* rays = new Ray[width*height];
+		{
+			float aspectRatio = width / (float)height;
+			float fov = 33; //get this from options
+			float fovScale = tan(glm::radians(fov * 0.5));
+			//glm::vec3 origin = { 0, 0, 0 };
+			//cameraToWorld.multVecMatrix(Vec3f(0), origin);  
+			glm_vec4 origin = { 0, 0, 20 };
+
+			int rayId = 0;
+			for (size_t j = 0; j < height; j++)
+			{
+				for (size_t i = 0; i < width; i++)
+				{
+					float x = (2 * (i + 0.5) / (float)width - 1) * aspectRatio * fovScale;
+					float y = (1 - 2 * (j + 0.5) / (float)height) * fovScale;
+					glm::vec3 dir = { x,y,-1 };
+					//cameraToWorld.multDirMatrix(Vec3f(x, y, -1), dir);
+					dir = glm::normalize(dir);
+
+					rays[rayId].origin = origin;
+					rays[rayId].dirAndId = { dir.x, dir.y, dir.z, (float)rayId };
+					rayId++;
+				}
+			}
+		}
+#endif
 
 		//Copy data to OpenGL
 		GLuint ssbo = 0;
@@ -345,13 +376,14 @@ int App::Run()
 		//Generate Primitives Information
 		Sphere spheres[] = {
 			//POS x		y	 z	  scale		COL r	g	b	coef	SPEC pow	coef
-			{ -15,	0,	-10,	1,			1,	0,	0,	0.8,		 50,	0.6 },
-			{ -10,	0,	-10,	2,			1,	0,	0,	0.8,		 50,	0.6 },
-			{ -5,	0,	-10,	1,			1,	0,	0,	0.8,		 50,	0.6 },
-			{ 0,	0,	-10,	1,			1,	0,	0,	0.8,		 50,	0.6 },
-			{ 5,	0,	-10,	1,			1,	0,	0,	0.8,		 50,	0.6 },
-			{ 10,	0,	-10,	2,			1,	0,	0,	0.8,		 50,	0.6 },
-			{ 15,	0,	-10,	1,			1,	0,	0,	0.8,		 50,	0.6 }
+			{ 13,	6,	-14,	1,		1,	0,	0,	0.8,		 50,	0.6 },
+			{ -13,	-10,-20,	3,	0,	0.8,0,	0.8,		 50,	0.6 },
+			{ -5,	2,	-10,	1,		1,	0,	0.7,0.8,		 50,	0.6 },
+			{ 0,	0,	-15,	2,		0.7,0.3,0,	0.8,		 50,	0.6 },
+			{ 7,	0,	-10,	1,		1,	0,	1,	0.8,		 50,	0.6 },
+			{ 10,	-3,	-5,		1,		0,	1,	1,	0.8,		 50,	0.6 },
+			{ 11,	-3,	-8,		1,		1,	0,	0,	0.8,		 50,	0.6 },
+			{ 13,	6,	-10,	3,	1,	1,	0,	0.8,		 50,	0.6 },
 		};
 
 		//Copy data to OpenGL

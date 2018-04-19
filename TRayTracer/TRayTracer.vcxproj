@@ -171,7 +171,7 @@
     <ClInclude Include="stb_image.h" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="bin\data\compute_shader.glcs">
+    <None Include="bin\data\compute_shader.comp">
       <FileType>Document</FileType>
     </None>
   </ItemGroup>
