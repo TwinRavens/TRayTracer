@@ -159,7 +159,7 @@ int App::Run()
 		false,						//Not normalized
 		sizeof(float) * 5,			//Size of buffer block per vertex (3 for XYZ and 2 for UV)
 		(void*)(0 * sizeof(float))	//Stride of 0 bytes (starts at the beginning of the block)
-		});
+	});
 	vbo.AddBufferDescriptor({		//Vertex UV Attribute
 		vc_loc,						//Location ID
 		2,							//Size of attribute (2 = UV)
@@ -167,7 +167,7 @@ int App::Run()
 		false,						//Not normalized
 		sizeof(float) * 5,			//Size of buffer block per vertex (3 for XYZ and 2 for UV)
 		(void*)(3 * sizeof(float))	//Stride of 3 bytes (starts 3 bytes away from the beginning of the block)
-		});
+	});
 
 	//Copy data to VertexBuffer Object
 	vbo.Fill(sizeof(points), points);

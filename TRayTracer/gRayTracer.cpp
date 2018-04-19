@@ -6,6 +6,7 @@ GLint rav::RayTracer::collisionProgram, rav::RayTracer::shadingProgram;
 
 GLint rav::RayTracer::generateRays()
 {
+#if ORTOGRAPHIC
 	//Ortographic camera rays
 	Ray* rays = new Ray[width*height];
 	{
@@ -25,6 +26,35 @@ GLint rav::RayTracer::generateRays()
 			yPos += yStep;
 		}
 	}
+#else
+	Ray* rays = new Ray[width*height];
+	{
+		float aspectRatio = width / (float)height;
+		float fov = 33; //get this from options
+		float fovScale = tan(glm::radians(fov * 0.5));
+		//glm::vec3 origin = { 0, 0, 0 };
+		//cameraToWorld.multVecMatrix(Vec3f(0), origin);  
+		glm_vec4 origin = { 0, 0, 20 };
+
+		int rayId = 0;
+		for (size_t j = 0; j < height; j++)
+		{
+			for (size_t i = 0; i < width; i++)
+			{
+				float x = (2 * (i + 0.5) / (float)width - 1) * aspectRatio * fovScale;
+				float y = (1 - 2 * (j + 0.5) / (float)height) * fovScale;
+				glm::vec3 dir = { x,y,-1 };
+				//cameraToWorld.multDirMatrix(Vec3f(x, y, -1), dir);
+				dir = glm::normalize(dir);
+
+				rays[rayId].origin = origin;
+				rays[rayId].dirAndId = { dir.x, dir.y, dir.z, (float)rayId };
+				rayId++;
+			}
+		}
+	}
+#endif
+
 
 	//Copy data to OpenGL
 	glGenBuffers(1, &raysBuffer);

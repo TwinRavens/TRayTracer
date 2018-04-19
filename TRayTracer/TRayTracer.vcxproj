@@ -183,8 +183,15 @@
     <ClInclude Include="stb_image.h" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="bin\data\collisionCompShader.glsl" />
-    <None Include="bin\data\shadingCompShader.glsl" />
+    <None Include="bin\data\collisionCompShader.glsl">
+	  <FileType>Document</FileType>
+    </None>
+    <None Include="bin\data\shadingCompShader.glsl">
+	  <FileType>Document</FileType>
+    </None>
+    <None Include="bin\data\compute_shader.comp">
+      <FileType>Document</FileType>
+    </None>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

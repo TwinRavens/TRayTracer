@@ -104,6 +104,9 @@
       <Filter>Resource Files</Filter>
     </None>
     <None Include="bin\data\shadingCompShader.glsl">
+	 <Filter>Resource Files</Filter>
+    </None>
+    <None Include="bin\data\compute_shader.comp">
       <Filter>Resource Files</Filter>
     </None>
   </ItemGroup>
