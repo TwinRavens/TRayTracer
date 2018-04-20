@@ -1,118 +1,151 @@
 #include "gRayTracer.h"
 
-int rav::RayTracer::height, rav::RayTracer::width;
-GLuint rav::RayTracer::frontBuffer, rav::RayTracer::backBuffer, rav::RayTracer::raysBuffer;
+int rav::RayTracer::height, rav::RayTracer::width, rav::RayTracer::raysSize;
+GLuint rav::RayTracer::screenBuffer, rav::RayTracer::raysBuffer, rav::RayTracer::rayHitsBuffer;
 GLint rav::RayTracer::collisionProgram, rav::RayTracer::shadingProgram;
 
 GLint rav::RayTracer::generateRays()
 {
 #pragma region Input Rays
+	{
+		//Define the number of rays by screen width and heigh
+		raysSize = width * height;
 
 #if ORTOGRAPHIC
-	//Ortographic camera rays
-	Ray* rays = new Ray[width*height];
-	{
-		int rayId = 0;
-		float xStep = 2.0f / (width + 1), yStep = 2.0f / (height + 1);
-		float xPos = -1.0f + xStep, yPos = -1.0f + yStep;
-		for (size_t i = 0; i < height; i++)
+		//Ortographic camera rays
+		Ray* rays = new Ray[width*height];
 		{
-			for (size_t j = 0; j < width; j++)
+			int rayId = 0;
+			float xStep = 2.0f / (width + 1), yStep = 2.0f / (height + 1);
+			float xPos = -1.0f + xStep, yPos = -1.0f + yStep;
+			for (size_t i = 0; i < height; i++)
 			{
-				rays[rayId].origin = { xPos, yPos, 0, 0 };
-				rays[rayId].dirAndId = { 0, 0, -1, (float)rayId };
-				rayId++;
-				xPos += xStep;
+				for (size_t j = 0; j < width; j++)
+				{
+					rays[rayId].origin = { xPos, yPos, 0, 0 };
+					rays[rayId].dirAndId = { 0, 0, -1, (float)rayId };
+					rayId++;
+					xPos += xStep;
+				}
+				xPos = -1.0f + xStep;
+				yPos += yStep;
 			}
-			xPos = -1.0f + xStep;
-			yPos += yStep;
 		}
-	}
 #else
-	Ray* rays = new Ray[width*height];
-	{
-		float aspectRatio = width / (float)height;
-		float fov = 33; //get this from options
-		float fovScale = tan(glm::radians(fov * 0.5));
-		//glm::vec3 origin = { 0, 0, 0 };
-		//cameraToWorld.multVecMatrix(Vec3f(0), origin);  
-		glm_vec4 origin = { 0, 0, 20, 1 };
-
-		int rayId = 0;
-		for (size_t j = 0; j < height; j++)
+		Ray* rays = new Ray[raysSize];
 		{
-			for (size_t i = 0; i < width; i++)
-			{
-				float x = (2 * (i + 0.5) / (float)width - 1) * aspectRatio * fovScale;
-				float y = (1 - 2 * (j + 0.5) / (float)height) * fovScale;
-				glm::vec3 dir = { x,y,-1 };
-				//cameraToWorld.multDirMatrix(Vec3f(x, y, -1), dir);
-				dir = glm::normalize(dir);
+			float aspectRatio = width / (float)height;
+			float fov = 33; //get this from options
+			float fovScale = tan(glm::radians(fov * 0.5));
+			//glm::vec3 origin = { 0, 0, 0 };
+			//cameraToWorld.multVecMatrix(Vec3f(0), origin);  
+			glm_vec4 origin = { 0, 0, 20, 0.5 };
 
-				rays[rayId].origAndWght = origin;
-				rays[rayId].dirAndId = { dir.x, dir.y, dir.z, *reinterpret_cast<float*>(&rayId) };
-				rayId++;
+			int rayId = 0;
+			for (size_t j = 0; j < height; j++)
+			{
+				for (size_t i = 0; i < width; i++)
+				{
+					float x = (2 * (i + 0.5) / (float)width - 1) * aspectRatio * fovScale;
+					float y = (1 - 2 * (j + 0.5) / (float)height) * fovScale;
+					glm::vec3 dir = { x,y,-1 };
+					//cameraToWorld.multDirMatrix(Vec3f(x, y, -1), dir);
+					dir = glm::normalize(dir);
+
+					rays[rayId].origAndWght = origin;
+					rays[rayId].dir = { dir.x, dir.y, dir.z };
+					rays[rayId].pixelCoords = { i, j, 0, 0 };
+					rayId++;
+				}
 			}
 		}
-	}
 #endif
 
-	//Copy data to OpenGL
-	glGenBuffers(1, &raysBuffer);
-	glBindBuffer(GL_SHADER_STORAGE_BUFFER, raysBuffer);
-	glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(Ray) * width * height, rays, GL_DYNAMIC_COPY);
+		//Copy data to OpenGL
+		glGenBuffers(1, &raysBuffer);
+		glBindBuffer(GL_SHADER_STORAGE_BUFFER, raysBuffer);
+		glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(Ray) * raysSize, rays, GL_DYNAMIC_COPY);
 
-	//Bind buffer base to mapping
-	GLuint ssbo_binding_point_index = 1;
-	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, ssbo_binding_point_index, raysBuffer);
+		//Bind buffer base to mapping
+		GLuint ssbo_binding_point_index = 1;
+		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, ssbo_binding_point_index, raysBuffer);
 
-	//Get Shader Storage index from program
-	GLuint block_index = 0;
-	block_index = glGetProgramResourceIndex(collisionProgram, GL_SHADER_STORAGE_BLOCK, "rBuffer");
-	if (block_index == GL_INVALID_INDEX)
-	{
-		rvDebug.Log("rBuffer Storage Block couldn't be found on program with id " + to_string(collisionProgram));
+		//Get Shader Storage index from program
+		GLuint block_index = 0;
+		block_index = glGetProgramResourceIndex(collisionProgram, GL_SHADER_STORAGE_BLOCK, "rBuffer");
+		if (block_index == GL_INVALID_INDEX)
+		{
+			rvDebug.Log("rBuffer Storage Block couldn't be found on program with id " + to_string(collisionProgram));
 
-		//Return error code
-		return 1;
+			//Return error code
+			return 1;
+		}
+		rvDebug.Log("rBuffer Storage Block found at index " + to_string(block_index));
+
+		//Associate buffer index with binding point
+		glShaderStorageBlockBinding(collisionProgram, block_index, ssbo_binding_point_index);
+		rvDebug.Log("rBuffer Storage Block binding is " + to_string(ssbo_binding_point_index));
 	}
-	rvDebug.Log("rBuffer Storage Block found at index " + to_string(block_index));
-
-	//Associate buffer index with binding point
-	glShaderStorageBlockBinding(collisionProgram, block_index, ssbo_binding_point_index);
-	rvDebug.Log("rBuffer Storage Block binding is " + to_string(ssbo_binding_point_index));
-
 #pragma endregion
 
 #pragma region Output RayHits
-
-	RayHit* rayHits = new RayHit[width*height];
-
-	//Copy data to OpenGL
-	glGenBuffers(1, &reyHitsBuffer);
-	glBindBuffer(GL_SHADER_STORAGE_BUFFER, reyHitsBuffer);
-	glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(RayHit) * width * height, rayHits, GL_DYNAMIC_COPY);
-
-	//Bind buffer base to mapping
-	GLuint ssbo_binding_point_index = 2;
-	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, ssbo_binding_point_index, reyHitsBuffer);
-
-	//Get Shader Storage index from program
-	GLuint block_index = 0;
-	block_index = glGetProgramResourceIndex(collisionProgram, GL_SHADER_STORAGE_BLOCK, "rHitBuffer");
-	if (block_index == GL_INVALID_INDEX)
 	{
-		rvDebug.Log("rBuffer Storage Block couldn't be found on program with id " + to_string(collisionProgram));
+		RayHit* rayHits = new RayHit[raysSize];
 
-		//Return error code
-		return 1;
+		//Copy data to OpenGL
+		glGenBuffers(1, &rayHitsBuffer);
+		glBindBuffer(GL_SHADER_STORAGE_BUFFER, rayHitsBuffer);
+		glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(RayHit) * raysSize, rayHits, GL_DYNAMIC_COPY);
+
+#pragma region Collision Program Mapping
+		{
+			//Bind buffer base to mapping
+			GLuint ssbo_binding_point_index = 2;
+			glBindBufferBase(GL_SHADER_STORAGE_BUFFER, ssbo_binding_point_index, rayHitsBuffer);
+
+			//Get Shader Storage index from program
+			GLuint block_index = 0;
+			block_index = glGetProgramResourceIndex(collisionProgram, GL_SHADER_STORAGE_BLOCK, "rHitBuffer");
+			if (block_index == GL_INVALID_INDEX)
+			{
+				rvDebug.Log("rHitBuffer Storage Block couldn't be found on program with id " + to_string(collisionProgram));
+
+				//Return error code
+				return 1;
+			}
+			rvDebug.Log("rHitBuffer Storage Block found at index " + to_string(block_index));
+
+			//Associate buffer index with binding point
+			glShaderStorageBlockBinding(collisionProgram, block_index, ssbo_binding_point_index);
+			rvDebug.Log("rHitBuffer Storage Block binding is " + to_string(ssbo_binding_point_index));
+		}
+#pragma endregion
+
+#pragma region Shading Program Mapping
+		{
+			//Bind buffer base to mapping
+			GLuint ssbo_binding_point_index = 2;
+			glBindBufferBase(GL_SHADER_STORAGE_BUFFER, ssbo_binding_point_index, rayHitsBuffer);
+
+			//Get Shader Storage index from program
+			GLuint block_index = 0;
+			block_index = glGetProgramResourceIndex(shadingProgram, GL_SHADER_STORAGE_BLOCK, "rHitBuffer");
+			if (block_index == GL_INVALID_INDEX)
+			{
+				rvDebug.Log("rHitBuffer Storage Block couldn't be found on program with id " + to_string(shadingProgram));
+
+				//Return error code
+				return 1;
+			}
+			rvDebug.Log("rHitBuffer Storage Block found at index " + to_string(block_index));
+
+			//Associate buffer index with binding point
+			glShaderStorageBlockBinding(shadingProgram, block_index, ssbo_binding_point_index);
+			rvDebug.Log("rHitBuffer Storage Block binding is " + to_string(ssbo_binding_point_index));
+		}
+#pragma endregion
+
 	}
-	rvDebug.Log("rBuffer Storage Block found at index " + to_string(block_index));
-
-	//Associate buffer index with binding point
-	glShaderStorageBlockBinding(collisionProgram, block_index, ssbo_binding_point_index);
-	rvDebug.Log("rBuffer Storage Block binding is " + to_string(ssbo_binding_point_index));
-
 #pragma endregion
 
 	return 0;
@@ -125,7 +158,7 @@ GLint rav::RayTracer::loadPrograms()
 	{
 		//Load Compute Shader
 		char* compute_shader;
-		rvLoadFile("collisionPass.comp", compute_shader, true);
+		rvLoadFile("./data/collisionPass.comp", compute_shader, true);
 
 		GLuint col_shader = glCreateShader(GL_COMPUTE_SHADER);
 		glShaderSource(col_shader, 1, &compute_shader, NULL);
@@ -176,70 +209,119 @@ GLint rav::RayTracer::loadPrograms()
 #pragma endregion
 
 #pragma region Load Shading Pass Shader
-	//{
-	//	//Load Compute Shader
-	//	char* compute_shader;
-	//	rvLoadFile("shadingCompShader.glsl", compute_shader, true);
+	{
+		//Load Compute Shader
+		char* compute_shader;
+		rvLoadFile("./data/shadingPass.comp", compute_shader, true);
 
-	//	GLuint shad_shader = glCreateShader(GL_COMPUTE_SHADER);
-	//	glShaderSource(shad_shader, 1, &compute_shader, NULL);
-	//	glCompileShader(shad_shader);
+		GLuint shad_shader = glCreateShader(GL_COMPUTE_SHADER);
+		glShaderSource(shad_shader, 1, &compute_shader, NULL);
+		glCompileShader(shad_shader);
 
-	//	GLint isCompiled = 0;
-	//	glGetShaderiv(shad_shader, GL_COMPILE_STATUS, &isCompiled);
+		GLint isCompiled = 0;
+		glGetShaderiv(shad_shader, GL_COMPILE_STATUS, &isCompiled);
 
-	//	//If got an error
-	//	if (isCompiled == GL_FALSE)
-	//	{
-	//		//Get size of info log
-	//		GLint maxLength = 0;
-	//		glGetShaderiv(shad_shader, GL_INFO_LOG_LENGTH, &maxLength);
+		//If got an error
+		if (isCompiled == GL_FALSE)
+		{
+			//Get size of info log
+			GLint maxLength = 0;
+			glGetShaderiv(shad_shader, GL_INFO_LOG_LENGTH, &maxLength);
 
-	//		//The maxLength includes the NULL character
-	//		GLchar *errorLog = new GLchar[maxLength];
-	//		glGetShaderInfoLog(shad_shader, maxLength, &maxLength, &errorLog[0]);
+			//The maxLength includes the NULL character
+			GLchar *errorLog = new GLchar[maxLength];
+			glGetShaderInfoLog(shad_shader, maxLength, &maxLength, &errorLog[0]);
 
-	//		//Error header
-	//		rvDebug.Log("Error compiling shading pass shader ", RV_ERROR_MESSAGE);
+			//Error header
+			rvDebug.Log("Error compiling shading pass shader ", RV_ERROR_MESSAGE);
 
-	//		//Create message
-	//		string msg((const char*)errorLog);
+			//Create message
+			string msg((const char*)errorLog);
 
-	//		//Pop last \0 char
-	//		msg.pop_back();
+			//Pop last \0 char
+			msg.pop_back();
 
-	//		//Log Error through Debugger
-	//		rvDebug.Log(msg, Debug::Error);
+			//Log Error through Debugger
+			rvDebug.Log(msg, Debug::Error);
 
-	//		//Don't leak the shader
-	//		glDeleteShader(shad_shader);
+			//Don't leak the shader
+			glDeleteShader(shad_shader);
 
-	//		//Return error code
-	//		return 2;
-	//	}
-	//	else
-	//	{
-	//		rvDebug.Log("Sucessfully compiled shading shader!\n");
-	//	}
+			//Return error code
+			return 2;
+		}
+		else
+		{
+			rvDebug.Log("Sucessfully compiled shading shader!\n");
+		}
 
-	//	//Link program
-	//	shadingProgram = glCreateProgram();
-	//	glAttachShader(shadingProgram, shad_shader);
-	//	glLinkProgram(shadingProgram);
-	//}
+		//Link program
+		shadingProgram = glCreateProgram();
+		glAttachShader(shadingProgram, shad_shader);
+		glLinkProgram(shadingProgram);
+	}
 #pragma endregion
 
 	//Return no error code
 	return 0;
 }
 
-GLint rav::RayTracer::computeCollision()
+GLint rav::RayTracer::collisionPass()
 {
+	//Lunch Compute Shader!
+	glUseProgram(collisionProgram);
+
+	//TODO: PASS THIS TO AN OBJECT MANAGER
+	GLint spheresCountId = glGetUniformLocation(collisionProgram, "spheresCount");
+	glUniform1i(spheresCountId, 7);
+
+	//Update time variable
+	GLint timeLoc = glGetUniformLocation(collisionProgram, "time");
+	glUniform1f(timeLoc, glfwGetTime());
+
+	//Update workgroup width variable
+	GLint groupWidthLoc = glGetUniformLocation(collisionProgram, "workGroupWidth");
+	glUniform1i(groupWidthLoc, width);
+
+	//Dispatch compute shader to process
+	glDispatchCompute((GLuint)width, (GLuint)height, 1);
+
+	// make sure writing to image has finished before read
+	glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+
 	return 0;
 }
 
-GLint rav::RayTracer::computeShading()
+GLint rav::RayTracer::shadingPass(int depth_level)
 {
+	//Lunch Compute Shader!
+	glUseProgram(shadingProgram);
+
+	//Bind front buffer to layout 0
+	glBindImageTexture(0, screenBuffer, 0, GL_FALSE, 0, GL_READ_WRITE, GL_RGBA32F);
+
+	//Update time variable
+	GLint timeLoc = glGetUniformLocation(shadingProgram, "time");
+	glUniform1f(timeLoc, glfwGetTime());
+
+	//Update workgroup width
+	GLint groupWidthLoc = glGetUniformLocation(shadingProgram, "workGroupWidth");
+	glUniform1i(groupWidthLoc, width);
+
+	//Update depth level
+	GLint depthLevelLoc = glGetUniformLocation(shadingProgram, "depthLevel");
+	glUniform1i(depthLevelLoc, depth_level);
+
+	//Update ambient colour
+	GLint ambientColourLoc = glGetUniformLocation(shadingProgram, "ambientColour");
+	glUniform4f(ambientColourLoc, 1.0f, 1.0f, 1.0f, 1.0f);
+
+	//Dispatch compute shader to process
+	glDispatchCompute((GLuint)width, (GLuint)height, 1);
+
+	// make sure writing to image has finished before read
+	glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+
 	return 0;
 }
 
@@ -291,14 +373,14 @@ GLint rav::RayTracer::Setup(int width, int height)
 	{
 		//Generate Primitives Information
 		Sphere spheres[] = {
-			//POS x		y	 z	  scale		COL r	g	b	alpha	spec	diff	ambient	coef	shinness	refrac_index	reflaction
-			{	-15,	0,	-10,	1,			1,	0,	0,	1.0,	0.8,	0.8,	1.0,			50,			1.0,			0.3 },
-			{	-10,	0,	-10,	2,			1,	0,	0,	1.0,	0.8,	0.8,	1.0,			50,			1.0,			0.3 },
-			{	 -5,	0,	-10,	1,			1,	0,	0,	1.0,	0.8,	0.8,	1.0,			50,			1.0,			0.3 },
-			{	  0,	0,	-10,	1,			1,	0,	0,	1.0,	0.8,	0.8,	1.0,			50,			1.0,			0.3 },
-			{	  5,	0,	-10,	1,			1,	0,	0,	1.0,	0.8,	0.8,	1.0,			50,			1.0,			0.3 },
-			{	 10,	0,	-10,	2,			1,	0,	0,	1.0,	0.8,	0.8,	1.0,			50,			1.0,			0.3 },
-			{	 15,	0,	-10,	1,			1,	0,	0,	1.0,	0.8,	0.8,	1.0,			50,			1.0,			0.3 }
+			//POS x		y	 z	  scale		COL r	g	b	alpha	spec	diff	ambient	coef	shinness	refrac_index	reflection
+			{	 13,	6,  -14,	1,			1,	0,	0,	1.0,	0.6,	0.8,	0.2,			50,			1.0,			0.3 },
+			{	-13,  -10,  -20,	3,			1,	0,	0,	1.0,	0.6,	0.8,	0.2,			50,			1.0,			0.3 },
+			{	 -5,	2,  -10,	1,			1,	0,	0,	1.0,	0.6,	0.8,	0.2,			50,			1.0,			0.3 },
+			{	  0,	0,  -15,	2,			1,	0,	0,	1.0,	0.6,	0.8,	0.2,			50,			1.0,			0.3 },
+			{	  7,	0,  -10,	1,			1,	0,	0,	1.0,	0.6,	0.8,	0.2,			50,			1.0,			0.3 },
+			{	 10,   -3,	 -5,	1,			1,	0,	0,	1.0,	0.6,	0.8,	0.2,			50,			1.0,			0.3 },
+			{	 11,   -3,	 -8,	1,			1,	0,	0,	1.0,	0.6,	0.8,	0.2,			50,			1.0,			0.3 }
 		};
 
 		//Copy data to OpenGL
@@ -307,24 +389,51 @@ GLint rav::RayTracer::Setup(int width, int height)
 		glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo);
 		glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(spheres), spheres, GL_DYNAMIC_COPY);
 
-		//Get Shader Storage index from program
-		GLuint block_index = 0;
-		block_index = glGetProgramResourceIndex(collisionProgram, GL_SHADER_STORAGE_BLOCK, "sBuffer");
-		if (block_index == GL_INVALID_INDEX)
-			rvDebug.Log("sBuffer Storage Block couldn't be found on collision program!");
-		rvDebug.Log("sBuffer Storage Block found at index " + to_string(block_index));
+#pragma region Collision Pass Mapping
+		{
+			//Get Shader Storage index from program
+			GLuint block_index = 0;
+			block_index = glGetProgramResourceIndex(collisionProgram, GL_SHADER_STORAGE_BLOCK, "sBuffer");
+			if (block_index == GL_INVALID_INDEX)
+				rvDebug.Log("sBuffer Storage Block couldn't be found on collision program!");
+			rvDebug.Log("sBuffer Storage Block found at index " + to_string(block_index));
 
-		//Associate buffer index with binding point
-		GLuint ssbo_binding_point_index = 2;
+			//Associate buffer index with binding point
+			GLuint ssbo_binding_point_index = 3;
 
-		glShaderStorageBlockBinding(collisionProgram, block_index, ssbo_binding_point_index);
-		rvDebug.Log("sBuffer Storage Block binding is " + to_string(ssbo_binding_point_index));
+			glShaderStorageBlockBinding(collisionProgram, block_index, ssbo_binding_point_index);
+			rvDebug.Log("sBuffer Storage Block binding is " + to_string(ssbo_binding_point_index));
 
-		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, ssbo_binding_point_index, ssbo);
+			glBindBufferBase(GL_SHADER_STORAGE_BUFFER, ssbo_binding_point_index, ssbo);
 
-		//Define spheres count uniform
-		GLint spheresCountId = glGetUniformLocation(collisionProgram, "spheresCount");
-		glUniform1i(spheresCountId, sizeof(spheres)/sizeof(Sphere));
+			//Define spheres count uniform
+			GLint spheresCountId = glGetUniformLocation(collisionProgram, "spheresCount");
+			glUniform1i(spheresCountId, sizeof(spheres) / sizeof(Sphere));
+		}
+#pragma endregion
+
+#pragma region Shading Pass Mapping
+		{
+			//Get Shader Storage index from program
+			GLuint block_index = 0;
+			block_index = glGetProgramResourceIndex(shadingProgram, GL_SHADER_STORAGE_BLOCK, "sBuffer");
+			if (block_index == GL_INVALID_INDEX)
+				rvDebug.Log("sBuffer Storage Block couldn't be found on collision program!");
+			rvDebug.Log("sBuffer Storage Block found at index " + to_string(block_index));
+
+			//Associate buffer index with binding point
+			GLuint ssbo_binding_point_index = 3;
+
+			glShaderStorageBlockBinding(shadingProgram, block_index, ssbo_binding_point_index);
+			rvDebug.Log("sBuffer Storage Block binding is " + to_string(ssbo_binding_point_index));
+
+			glBindBufferBase(GL_SHADER_STORAGE_BUFFER, ssbo_binding_point_index, ssbo);
+
+			//Define spheres count uniform
+			GLint spheresCountId = glGetUniformLocation(shadingProgram, "spheresCount");
+			glUniform1i(spheresCountId, sizeof(spheres) / sizeof(Sphere));
+		}
+#pragma endregion
 
 		//glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 
@@ -338,23 +447,9 @@ GLint rav::RayTracer::Setup(int width, int height)
 
 #pragma region Generate Screen Front Buffer
 	//Generate empty texture
-	glGenTextures(1, &frontBuffer);
+	glGenTextures(1, &screenBuffer);
 	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, frontBuffer);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, width, height, 0, GL_RGBA, GL_FLOAT, NULL);
-
-	//Define texture parameters
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);	//Repeat out of bounds UVs
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);	//Repeat out of bounds UVs
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);		//Set Image sampling filtering
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);		//Set Image sampling filtering
-#pragma endregion
-
-#pragma region Generate Screen Back Buffer
-	//Generate empty texture
-	glGenTextures(1, &backBuffer);
-	glActiveTexture(GL_TEXTURE1);
-	glBindTexture(GL_TEXTURE_2D, backBuffer);
+	glBindTexture(GL_TEXTURE_2D, screenBuffer);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, width, height, 0, GL_RGBA, GL_FLOAT, NULL);
 
 	//Define texture parameters
@@ -365,39 +460,22 @@ GLint rav::RayTracer::Setup(int width, int height)
 #pragma endregion
 
 	//Returns screen buffer index
-	return frontBuffer;
+	return screenBuffer;
 }
 
 GLint rav::RayTracer::Compute(int depth_level)
 {
+	//clearPass(screenBuffer);
+	
 	for (size_t i = 0; i < depth_level; i++)
 	{
 
-#pragma region Collision Pass
-		//Lunch Compute Shader!
-		glUseProgram(collisionProgram);
+		collisionPass();
 
-		//TODO: PASS THIS TO AN OBJECT MANAGER
-		GLint spheresCountId = glGetUniformLocation(collisionProgram, "spheresCount");
-		glUniform1i(spheresCountId, 7);
+		shadingPass(i);
 
-		//Bind front buffer to layout 0
-		glBindImageTexture(0, frontBuffer, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA32F);
-
-		//Update time variable
-		GLint timeLoc = glGetUniformLocation(collisionProgram, "time");
-		glUniform1f(timeLoc, glfwGetTime());
-
-		//Dispatch compute shader to process
-		glDispatchCompute((GLuint)width, (GLuint)height, 1);
-
-		// make sure writing to image has finished before read
-		glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
-#pragma endregion
-
-		//TODO: Shading pass
 	}
 
 	//Return OpenGL Front Buffer id
-	return frontBuffer;
+	return screenBuffer;
 }

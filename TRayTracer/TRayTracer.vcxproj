@@ -188,10 +188,10 @@
       <FileType>Document</FileType>
     </None>
     <None Include="bin\data\collisionPass.comp">
-	  <FileType>Document</FileType>
+      <FileType>Document</FileType>
     </None>
     <None Include="bin\data\shadingPass.comp">
-	  <FileType>Document</FileType>
+      <FileType>Document</FileType>
     </None>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

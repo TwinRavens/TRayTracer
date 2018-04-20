@@ -112,10 +112,10 @@ int App::Initialize(cint &width, cint &height, str name, bool fullscreen)
 int App::Run()
 {
 	char* vertex_shader;
-	rvLoadFile("vertex_uv.vs", vertex_shader, true);
+	rvLoadFile("./data/vertex_uv.vs", vertex_shader, true);
 
 	char* fragment_shader;
-	rvLoadFile("fragment_base.fs", fragment_shader, true);
+	rvLoadFile("./data/fragment_base.fs", fragment_shader, true);
 
 	GLuint vs = rvCreateShader("vertex_uv_vs", vertex_shader, RV_VERTEX_SHADER);
 
@@ -204,7 +204,7 @@ int App::Run()
 		_update_fps_counter(window);
 
 		//===============COMPUT RAYTRACING HERE====================
-		GLint raytracePreview = RayTracer::Compute(1);
+		GLint raytracePreview = RayTracer::Compute(2);
 		//===============COMPUT RAYTRACING HERE====================
 
 #pragma region Draw Raytracer Output

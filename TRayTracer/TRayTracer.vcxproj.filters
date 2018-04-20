@@ -107,7 +107,7 @@
       <Filter>Resource Files</Filter>
     </None>
     <None Include="bin\data\compute_shader.comp">
-	  <Filter>Resource Files</Filter>
+      <Filter>Resource Files</Filter>
     </None>
     <None Include="bin\data\shadingPass.comp">
       <Filter>Resource Files</Filter>

@@ -28,11 +28,11 @@ namespace rav
 		static GLint collisionProgram, shadingProgram;
 
 		//Screen data
-		static int width, height;
-		static GLuint frontBuffer, backBuffer;
+		static int width, height, raysSize;
+		static GLuint screenBuffer;
 
 		//Shader Storage Buffer Objects
-		static GLuint raysBuffer, reyHitsBuffer;
+		static GLuint raysBuffer, rayHitsBuffer;
 
 		//Rays generation
 		static GLint generateRays();
@@ -41,10 +41,10 @@ namespace rav
 		static GLint loadPrograms();
 
 		//Collision pass
-		static GLint computeCollision();
+		static GLint collisionPass();
 
 		//Shading pass
-		static GLint computeShading();
+		static GLint shadingPass(int depth_level);
 
 		//Private constructor to avoid overriding
 		RayTracer();
