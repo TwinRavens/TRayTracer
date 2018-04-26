@@ -390,6 +390,12 @@ GLint rav::RayTracer::Setup(int width, int height)
 			{	 11,   -3,	 -8,	1,			1,	0,	0,	1.0,	0.6,	0.8,	0.2,			50,			1.0,			0.3 }
 		};
 
+		GLint value = 0;
+		glGetIntegerv(GL_MAX_UNIFORM_BLOCK_SIZE, &value);
+		rvDebug.Log("Max Uniform Block size is " + to_string(value) + ", current spheres buffer size is " + to_string(sizeof(spheres)) + ".");
+		rvDebug.Log("Max current Spheres count is " + to_string(value/sizeof(Sphere)) + ".");
+
+
 		//Copy data to OpenGL
 		GLuint ssbo = 0;
 		glGenBuffers(1, &ssbo);
