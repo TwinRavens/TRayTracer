@@ -5,7 +5,7 @@ layout(local_size_x = 1, local_size_y = 1) in;
 layout(location=0) uniform float time;
 layout(location=1) uniform int spheresCount;
 layout(location=2) uniform int workGroupWidth;
-layout(location=3) uniform int screenArea;
+layout(location=3) uniform int depthLevel;
 
 struct Ray
 {
@@ -79,12 +79,12 @@ void main()
 	const ivec3 global_coords = ivec3(gl_GlobalInvocationID.xyz);
 
 	//Get working ray id
-	const int rayId = global_coords.x + global_coords.y * workGroupWidth + global_coords.z * screenArea;
+	const int rayId = (global_coords.x + global_coords.y * workGroupWidth) * (depthLevel+1) + global_coords.z;
 	const ivec2 pixelCoords = rays[rayId].pixelCoords.xy;
 
 	//define camera points
-	vec3 cameraOrigin = rays[rayId].origAndWght.xyz;
-	vec3 cameraDir = rays[rayId].dir.xyz;
+	const vec3 cameraOrigin = rays[rayId].origAndWght.xyz;
+	const vec3 cameraDir = rays[rayId].dir.xyz;
 
 	int indexClosestSphere = -1;
 	float closestDelta = 4294967296.0;
@@ -132,14 +132,11 @@ void main()
 		normal = normalize(normal);
 
 		//Store data in Raycast Hit structures
-		hits[rayId].hitAndWeight = vec4(hit, rays[rayId].origAndWght.w);
-		hits[rayId].normal = vec4(normal, 0);
-		hits[rayId].viewDir = vec4(cameraDir, 0);
-		hits[rayId].pixelCoordsObjIdType = ivec4(pixelCoords.xy, indexClosestSphere, 1);
+		hits[rayId] = RayHit(vec4(hit, rays[rayId].origAndWght.w), vec4(normal, 0), vec4(cameraDir, 0), ivec4(pixelCoords.xy, indexClosestSphere, 1));
+
 	}
 	else
 	{
-		hits[rayId].hitAndWeight = rays[rayId].origAndWght;
-		hits[rayId].pixelCoordsObjIdType = ivec4(pixelCoords.xy, indexClosestSphere, 0);
+		hits[rayId] = RayHit(rays[rayId].origAndWght, vec4(cameraDir, 0), vec4(cameraDir, 0), ivec4(pixelCoords.xy, indexClosestSphere, 1));
 	}
 }

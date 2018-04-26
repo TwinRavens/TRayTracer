@@ -319,16 +319,13 @@ GLint rav::RayTracer::collisionPass(int depth_level)
 	GLint groupWidthLoc = 2;
 	glUniform1i(groupWidthLoc, width);
 
-	//Update screen area
-	//GLint screenAreaLoc = glGetUniformLocation(shadingProgram, "screenArea");
-	GLint screenAreaLoc = 3;
-	glUniform1i(screenAreaLoc, screenArea);
+	//Update depth level
+	//GLint depthLevelLoc = glGetUniformLocation(shadingProgram, "depth_level");
+	GLint depthLevelLoc = 3;
+	glUniform1i(depthLevelLoc, depth_level);
 
 	//Dispatch compute shader to process
 	glDispatchCompute((GLuint)width, (GLuint)height, depth_level+1);
-
-	// make sure writing to image has finished before read
-	glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
 
 	return 0;
 }
@@ -368,9 +365,6 @@ GLint rav::RayTracer::shadingPass(int depth_level)
 
 	//Dispatch compute shader to process
 	glDispatchCompute((GLuint)width, (GLuint)height, depth_level+1);
-
-	// make sure writing to image has finished before read
-	glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
 
 	return 0;
 }
@@ -425,13 +419,13 @@ GLint rav::RayTracer::Setup(int width, int height, int depth)
 		//Generate Primitives Information
 		Sphere spheres[] = {
 			//POS x		y	 z	  scale		COL r	g	b	alpha	spec	diff	ambient	coef	shinness	refrac_index	reflection
-			{	 13,	6,  -14,	1,			1,	0,	0,	1.0,	0.6,	0.8,	0.2,			50,			1.0,			0.3 },
-			{	-13,  -10,  -20,	3,			1,	0,	0,	1.0,	0.6,	0.8,	0.2,			50,			1.0,			0.3 },
+			{	 13,	6,  -14,	1,			1,	0,	0,	1.0,	0.6,	0.8,	0.2,			50,			1.0,			0.0 },
+			{	-13,  -10,  -20,	3,			1,	0,	0,	1.0,	0.6,	0.8,	0.2,			50,			1.0,			0.0 },
 			{	 -5,	2,  -10,	1,			1,	0,	0,	1.0,	0.6,	0.8,	0.2,			50,			1.0,			0.3 },
-			{	  0,	0,  -15,	2,			1,	0,	0,	1.0,	0.6,	0.8,	0.2,			50,			1.0,			0.3 },
-			{	  7,	0,  -10,	1,			1,	0,	0,	1.0,	0.6,	0.8,	0.2,			50,			1.0,			0.3 },
-			{	 10,   -3,	 -5,	1,			1,	0,	0,	1.0,	0.6,	0.8,	0.2,			50,			1.0,			0.3 },
-			{	 11,   -3,	 -8,	1,			1,	0,	0,	1.0,	0.6,	0.8,	0.2,			50,			1.0,			0.3 }
+			{	  0,	0,  -15,	2,			1,	0,	0,	1.0,	0.6,	0.8,	0.2,			50,			1.0,			0.0 },
+			{	  7,	0,  -10,	1,			1,	0,	0,	1.0,	0.6,	0.8,	0.2,			50,			1.0,			0.6 },
+			{	 10,   -3,	 -5,	1,			1,	0,	0,	0.4,	0.6,	0.8,	0.2,			50,			1.01,			0.0 },
+			{	 11,   -3,	 -8,	1,			1,	0,	0,	1.0,	0.6,	0.8,	0.2,			50,			1.0,			0.0 }
 		};
 
 		GLint value = 0;
@@ -524,10 +518,9 @@ GLint rav::RayTracer::Compute()
 {
 	//clearPass(screenBuffer);
 
-	////Copy data to OpenGL
-	//glGenBuffers(1, &raysBuffer);
-	//glBindBuffer(GL_SHADER_STORAGE_BUFFER, raysBuffer);
-	//glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(Ray) * raysSize, rays, GL_DYNAMIC_COPY);
+	//Copy data to OpenGL
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, raysBuffer);
+	glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(Ray) * raysSize, rays, GL_DYNAMIC_COPY);
 
 	for (size_t i = 0; i < depthLevel; i++)
 	{
@@ -537,6 +530,9 @@ GLint rav::RayTracer::Compute()
 		shadingPass(i);
 
 	}
+
+	// make sure writing to image has finished before read
+	glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
 
 	//Return OpenGL Front Buffer id
 	return screenBuffer;

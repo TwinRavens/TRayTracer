@@ -90,19 +90,25 @@ vec4 shade(vec3 point, vec3 normal, vec3 viewDir, int objId) {
 
 void main() {
 	// base pixel colour for image
-	vec4 pixel = const vec4(0.0f, 0.4509803921568627f, 0.8980392156862745f, 1.0);
+	vec4 pixel = const vec4(0);
 
 	// get index in global work group i.e x,y position
 	const ivec3 global_coords = ivec3(gl_GlobalInvocationID.xyz);
 
 	//Get working ray id
-	const int hitId = global_coords.x + global_coords.y * workGroupWidth + global_coords.z * screenArea;
+	const int hitId = (global_coords.x + global_coords.y * workGroupWidth) * (depthLevel+1) + global_coords.z;
 
 	//Get texture pixel coords from hit
 	const ivec2 pixelCoords = hits[hitId].pixelCoordsObjIdType.xy;
 
 	//Get object id from hit
 	const int objId = hits[hitId].pixelCoordsObjIdType.z;
+
+	const float rayContribution = hits[hitId].hitAndWeight.w;
+
+	//General id
+	int id = global_coords.x + global_coords.y * workGroupWidth;
+	int nextDepthId = id * (depthLevel+1) * 2 + (global_coords.z * 2);
 
 	if (objId != -1) //TODO: OPTIMIZE THIS!
 	{
@@ -111,32 +117,35 @@ void main() {
 		vec3 viewDir = hits[hitId].viewDir.xyz;
 		
 		//Do proper shading
-		pixel = shade(hitPos, hitNor, viewDir, objId);
-
+		pixel = mix(vec4(0), shade(hitPos, hitNor, viewDir, objId), spheres[objId].diffColAlpha.a);
+		
 		//Reflection
-		int id = global_coords.x + global_coords.y * workGroupWidth;
-		int idReflex = id + (global_coords.z * 2) * screenArea;
-		
-		vec3 reflectedRayDir = reflect(viewDir, hitNor);
-		float reflectContribution = hits[hitId].hitAndWeight.w * spheres[objId].refrIndexReflCoef.y;
-		
-		//rays[idReflex] = Ray(vec4(hitPos,reflectContribution), vec4(reflectedRayDir,1), pixelCoords.xyxy);
+		int idReflex = nextDepthId;
 
+		vec3 reflectedRayDir = reflect(viewDir, hitNor);
+		float reflectContribution = rayContribution * spheres[objId].refrIndexReflCoef.y;
+		
+		rays[idReflex] = Ray(vec4(hitPos, reflectContribution), vec4(reflectedRayDir, 0), pixelCoords.xyxy);
 
 		//Refraction
-		int idRefrac = id + (global_coords.z * 2 + 1) * screenArea;
+		int idRefrac = nextDepthId + 1;
 
 		vec3 refractRayDir = refract(viewDir, hitNor, spheres[objId].refrIndexReflCoef.x);
-		float refractContribution = hits[hitId].hitAndWeight.w * spheres[objId].diffColAlpha.a;
+		float refractContribution = rayContribution * (1.0 - spheres[objId].diffColAlpha.w);
 
-		//rays[idRefrac] = Ray(vec4(hitPos,refractContribution), vec4(refractRayDir,1), pixelCoords.xyxy);
+		rays[idRefrac] = Ray(vec4(hitPos, refractContribution), vec4(refractRayDir, 0), pixelCoords.xyxy);
+	}
+	else
+	{
+		rays[nextDepthId] = Ray(vec4(0), vec4(0), pixelCoords.xyxy);
+		rays[nextDepthId+1] = Ray(vec4(0), vec4(0), pixelCoords.xyxy);
 	}
 
 	//Get last pass pixel (only if this is not the first pass)
-	vec4 lastPixel = imageLoad(img_output, pixelCoords) * (when_neq(depthLevel, 0));
+	vec4 lastPixel = imageLoad(img_output, pixelCoords) * step(1, depthLevel);
 
 	//Calculate final pass pixel
-	vec4 outPixel = lastPixel + pixel * hits[hitId].hitAndWeight.w;
+	vec4 outPixel = lastPixel + pixel * rayContribution;
 
 	imageStore(img_output, pixelCoords, outPixel);
 }
