@@ -94,6 +94,8 @@ void main() {
 		
 		//Do proper shading
 		pixel = shade(hitPos, hitNor, viewDir, objId);
+
+		//create rays
 	}
 
 	//Get last pass pixel (only if this is not the first pass)

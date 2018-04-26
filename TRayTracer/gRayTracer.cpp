@@ -6,7 +6,8 @@ GLint rav::RayTracer::collisionProgram, rav::RayTracer::shadingProgram;
 
 GLint rav::RayTracer::generateRays()
 {
-#pragma region Input Rays
+
+#pragma region Screen Rays
 	{
 		//Define the number of rays by screen width and heigh
 		raysSize = width * height;
@@ -66,6 +67,7 @@ GLint rav::RayTracer::generateRays()
 		glBindBuffer(GL_SHADER_STORAGE_BUFFER, raysBuffer);
 		glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(Ray) * raysSize, rays, GL_DYNAMIC_COPY);
 
+#pragma region Collision Program Mapping
 		//Bind buffer base to mapping
 		GLuint ssbo_binding_point_index = 1;
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, ssbo_binding_point_index, raysBuffer);
@@ -85,10 +87,13 @@ GLint rav::RayTracer::generateRays()
 		//Associate buffer index with binding point
 		glShaderStorageBlockBinding(collisionProgram, block_index, ssbo_binding_point_index);
 		rvDebug.Log("rBuffer Storage Block binding is " + to_string(ssbo_binding_point_index));
+#pragma endregion
+
+
 	}
 #pragma endregion
 
-#pragma region Output RayHits
+#pragma region RayHits
 	{
 		RayHit* rayHits = new RayHit[raysSize];
 
@@ -287,13 +292,14 @@ GLint rav::RayTracer::collisionPass()
 	glUniform1i(groupWidthLoc, width);
 
 	//Dispatch compute shader to process
-	glDispatchCompute((GLuint)width, (GLuint)height, 1);
+	glDispatchCompute((GLuint)width, (GLuint)height, 1); //
 
 	// make sure writing to image has finished before read
 	glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
 
 	return 0;
 }
+
 
 GLint rav::RayTracer::shadingPass(int depth_level)
 {
@@ -332,11 +338,12 @@ GLint rav::RayTracer::shadingPass(int depth_level)
 	return 0;
 }
 
-GLint rav::RayTracer::Setup(int width, int height)
+GLint rav::RayTracer::Setup(int width, int height, int depth)
 {
 	//Hold texture size values
 	rav::RayTracer::width = width;
 	rav::RayTracer::height = height;
+	rav::RayTracer::depthLevel = depth;
 
 #pragma region Debug Compute Shader Variables
 	//Get maximum compute capabilities
@@ -476,11 +483,11 @@ GLint rav::RayTracer::Setup(int width, int height)
 	return screenBuffer;
 }
 
-GLint rav::RayTracer::Compute(int depth_level)
+GLint rav::RayTracer::Compute()
 {
 	//clearPass(screenBuffer);
 	
-	for (size_t i = 0; i < depth_level; i++)
+	for (size_t i = 0; i < depthLevel; i++)
 	{
 
 		collisionPass();
