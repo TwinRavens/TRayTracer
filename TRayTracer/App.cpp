@@ -238,6 +238,7 @@ int App::Run()
 			glfwSetWindowShouldClose(window, 1);
 		}
 
+		//system("pause");
 	}
 
 	//Return Sucessfully Exit

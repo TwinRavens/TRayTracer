@@ -6,7 +6,20 @@ layout(rgba32f, binding = 0) uniform image2D img_output;
 layout(location=0) uniform float time;
 layout(location=1) uniform int depthLevel;
 layout(location=2) uniform int workGroupWidth;
-layout(location=3) uniform vec4 ambientColour;
+layout(location=3) uniform int screenArea;
+layout(location=4) uniform vec4 ambientColour;
+
+struct Ray
+{
+	vec4 origAndWght;
+	vec4 dir;
+	ivec4 pixelCoords; //And two padding
+};
+
+layout (std140) buffer rBuffer
+{
+  Ray rays[];
+};
 
 struct RayHit
 {
@@ -42,6 +55,11 @@ vec4 lightColor = vec4(1.0, 1.0, 1.0, 1.0);
 //These are implemented in hardware, that's why they use vec4s
 //Could stack 4 values at a time for comparisong
 
+//Returns 0 when x equals y and 1 when not
+float when_neq(float x, float y) {
+  return abs(sign(x - y));
+}
+
 vec4 shade(vec3 point, vec3 normal, vec3 viewDir, int objId) {
 
 		//ambient
@@ -62,8 +80,8 @@ vec4 shade(vec3 point, vec3 normal, vec3 viewDir, int objId) {
 
 		//Reflect = lightDir - 2 * normal * dot(normal, lightDir)
 		//Ou normalize(2 * normal * dot(normal, lightDir) - lightDir) quando o raio vem da fonte de luz
-		vec3 reflect = normalize(lightDir - 2 * normal * diffuse);
-		float specular = clamp(abs(pow(dot(reflect, viewDir), specullarPower)), 0, 1);
+		vec3 reflection = normalize(lightDir - 2 * normal * diffuse);
+		float specular = clamp(abs(pow(dot(reflection, viewDir), specullarPower)), 0, 1);
 		
 		vec4 is = ks * specular * lightColor;
 
@@ -75,10 +93,10 @@ void main() {
 	vec4 pixel = const vec4(0.0f, 0.4509803921568627f, 0.8980392156862745f, 1.0);
 
 	// get index in global work group i.e x,y position
-	const ivec2 global_coords = ivec2(gl_GlobalInvocationID.xy);
+	const ivec3 global_coords = ivec3(gl_GlobalInvocationID.xyz);
 
 	//Get working ray id
-	const int hitId = global_coords.x + global_coords.y * workGroupWidth;
+	const int hitId = global_coords.x + global_coords.y * workGroupWidth + global_coords.z * screenArea;
 
 	//Get texture pixel coords from hit
 	const ivec2 pixelCoords = hits[hitId].pixelCoordsObjIdType.xy;
@@ -95,11 +113,27 @@ void main() {
 		//Do proper shading
 		pixel = shade(hitPos, hitNor, viewDir, objId);
 
-		//create rays
+		//Reflection
+		int id = global_coords.x + global_coords.y * workGroupWidth;
+		int idReflex = id + (global_coords.z * 2) * screenArea;
+		
+		vec3 reflectedRayDir = reflect(viewDir, hitNor);
+		float reflectContribution = hits[hitId].hitAndWeight.w * spheres[objId].refrIndexReflCoef.y;
+		
+		//rays[idReflex] = Ray(vec4(hitPos,reflectContribution), vec4(reflectedRayDir,1), pixelCoords.xyxy);
+
+
+		//Refraction
+		int idRefrac = id + (global_coords.z * 2 + 1) * screenArea;
+
+		vec3 refractRayDir = refract(viewDir, hitNor, spheres[objId].refrIndexReflCoef.x);
+		float refractContribution = hits[hitId].hitAndWeight.w * spheres[objId].diffColAlpha.a;
+
+		//rays[idRefrac] = Ray(vec4(hitPos,refractContribution), vec4(refractRayDir,1), pixelCoords.xyxy);
 	}
 
 	//Get last pass pixel (only if this is not the first pass)
-	vec4 lastPixel = imageLoad(img_output, pixelCoords) * (1 - step(depthLevel, 0));
+	vec4 lastPixel = imageLoad(img_output, pixelCoords) * (when_neq(depthLevel, 0));
 
 	//Calculate final pass pixel
 	vec4 outPixel = lastPixel + pixel * hits[hitId].hitAndWeight.w;

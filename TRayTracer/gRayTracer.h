@@ -41,7 +41,7 @@ namespace rav
 		static GLint loadPrograms();
 
 		//Collision pass
-		static GLint collisionPass();
+		static GLint collisionPass(int depth_level);
 
 		//Shading pass
 		static GLint shadingPass(int depth_level);

@@ -1,16 +1,20 @@
 #include "gRayTracer.h"
 
-int rav::RayTracer::height, rav::RayTracer::width, rav::RayTracer::raysSize;
+int rav::RayTracer::height, rav::RayTracer::width, rav::RayTracer::depthLevel, rav::RayTracer::raysSize;
 GLuint rav::RayTracer::screenBuffer, rav::RayTracer::raysBuffer, rav::RayTracer::rayHitsBuffer;
 GLint rav::RayTracer::collisionProgram, rav::RayTracer::shadingProgram;
+static int screenArea;
+static Ray* rays;
 
 GLint rav::RayTracer::generateRays()
 {
 
 #pragma region Screen Rays
 	{
+		screenArea = (width*height);
+
 		//Define the number of rays by screen width and heigh
-		raysSize = width * height;
+		raysSize = (width * height) * pow(2, depthLevel);
 
 #if ORTOGRAPHIC
 		//Ortographic camera rays
@@ -33,14 +37,14 @@ GLint rav::RayTracer::generateRays()
 			}
 		}
 #else
-		Ray* rays = new Ray[raysSize];
+		rays = new Ray[raysSize];
 		{
 			float aspectRatio = width / (float)height;
 			float fov = 33; //get this from options
 			float fovScale = tan(glm::radians(fov * 0.5));
 			//glm::vec3 origin = { 0, 0, 0 };
 			//cameraToWorld.multVecMatrix(Vec3f(0), origin);  
-			glm_vec4 origin = { 0, 0, 20, 0.5 };
+			glm_vec4 origin = { 0, 0, 20, 1 };
 
 			int rayId = 0;
 			for (size_t j = 0; j < height; j++)
@@ -68,28 +72,52 @@ GLint rav::RayTracer::generateRays()
 		glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(Ray) * raysSize, rays, GL_DYNAMIC_COPY);
 
 #pragma region Collision Program Mapping
-		//Bind buffer base to mapping
-		GLuint ssbo_binding_point_index = 1;
-		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, ssbo_binding_point_index, raysBuffer);
-
-		//Get Shader Storage index from program
-		GLuint block_index = 0;
-		block_index = glGetProgramResourceIndex(collisionProgram, GL_SHADER_STORAGE_BLOCK, "rBuffer");
-		if (block_index == GL_INVALID_INDEX)
 		{
-			rvDebug.Log("rBuffer Storage Block couldn't be found on program with id " + to_string(collisionProgram));
+			//Bind buffer base to mapping
+			GLuint ssbo_binding_point_index = 1;
+			glBindBufferBase(GL_SHADER_STORAGE_BUFFER, ssbo_binding_point_index, raysBuffer);
 
-			//Return error code
-			return 1;
+			//Get Shader Storage index from program
+			GLuint block_index = 0;
+			block_index = glGetProgramResourceIndex(collisionProgram, GL_SHADER_STORAGE_BLOCK, "rBuffer");
+			if (block_index == GL_INVALID_INDEX)
+			{
+				rvDebug.Log("rBuffer Storage Block couldn't be found on program with id " + to_string(collisionProgram));
+
+				//Return error code
+				return 1;
+			}
+			rvDebug.Log("rBuffer Storage Block found at index " + to_string(block_index));
+
+			//Associate buffer index with binding point
+			glShaderStorageBlockBinding(collisionProgram, block_index, ssbo_binding_point_index);
+			rvDebug.Log("rBuffer Storage Block binding is " + to_string(ssbo_binding_point_index));
 		}
-		rvDebug.Log("rBuffer Storage Block found at index " + to_string(block_index));
-
-		//Associate buffer index with binding point
-		glShaderStorageBlockBinding(collisionProgram, block_index, ssbo_binding_point_index);
-		rvDebug.Log("rBuffer Storage Block binding is " + to_string(ssbo_binding_point_index));
 #pragma endregion
 
+#pragma region Shading Program Mapping
+		{
+			//Bind buffer base to mapping
+			GLuint ssbo_binding_point_index = 1;
+			glBindBufferBase(GL_SHADER_STORAGE_BUFFER, ssbo_binding_point_index, raysBuffer);
 
+			//Get Shader Storage index from program
+			GLuint block_index = 0;
+			block_index = glGetProgramResourceIndex(shadingProgram, GL_SHADER_STORAGE_BLOCK, "rBuffer");
+			if (block_index == GL_INVALID_INDEX)
+			{
+				rvDebug.Log("rBuffer Storage Block couldn't be found on program with id " + to_string(shadingProgram));
+
+				//Return error code
+				return 1;
+			}
+			rvDebug.Log("rBuffer Storage Block found at index " + to_string(block_index));
+
+			//Associate buffer index with binding point
+			glShaderStorageBlockBinding(shadingProgram, block_index, ssbo_binding_point_index);
+			rvDebug.Log("rBuffer Storage Block binding is " + to_string(ssbo_binding_point_index));
+		}
+#pragma endregion
 	}
 #pragma endregion
 
@@ -271,7 +299,7 @@ GLint rav::RayTracer::loadPrograms()
 	return 0;
 }
 
-GLint rav::RayTracer::collisionPass()
+GLint rav::RayTracer::collisionPass(int depth_level)
 {
 	//Lunch Compute Shader!
 	glUseProgram(collisionProgram);
@@ -291,15 +319,19 @@ GLint rav::RayTracer::collisionPass()
 	GLint groupWidthLoc = 2;
 	glUniform1i(groupWidthLoc, width);
 
+	//Update screen area
+	//GLint screenAreaLoc = glGetUniformLocation(shadingProgram, "screenArea");
+	GLint screenAreaLoc = 3;
+	glUniform1i(screenAreaLoc, screenArea);
+
 	//Dispatch compute shader to process
-	glDispatchCompute((GLuint)width, (GLuint)height, 1); //
+	glDispatchCompute((GLuint)width, (GLuint)height, depth_level+1);
 
 	// make sure writing to image has finished before read
 	glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
 
 	return 0;
 }
-
 
 GLint rav::RayTracer::shadingPass(int depth_level)
 {
@@ -324,13 +356,18 @@ GLint rav::RayTracer::shadingPass(int depth_level)
 	GLint groupWidthLoc = 2;
 	glUniform1i(groupWidthLoc, width);
 
+	//Update screen area
+	//GLint screenAreaLoc = glGetUniformLocation(shadingProgram, "screenArea");
+	GLint screenAreaLoc = 3;
+	glUniform1i(screenAreaLoc, screenArea);
+
 	//Update ambient colour
 	//GLint ambientColourLoc = glGetUniformLocation(shadingProgram, "ambientColour");
-	GLint ambientColourLoc = 3;
+	GLint ambientColourLoc = 4;
 	glUniform4f(ambientColourLoc, 1.0f, 1.0f, 1.0f, 1.0f);
 
 	//Dispatch compute shader to process
-	glDispatchCompute((GLuint)width, (GLuint)height, 1);
+	glDispatchCompute((GLuint)width, (GLuint)height, depth_level+1);
 
 	// make sure writing to image has finished before read
 	glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
@@ -400,7 +437,7 @@ GLint rav::RayTracer::Setup(int width, int height, int depth)
 		GLint value = 0;
 		glGetIntegerv(GL_MAX_UNIFORM_BLOCK_SIZE, &value);
 		rvDebug.Log("Max Uniform Block size is " + to_string(value) + ", current spheres buffer size is " + to_string(sizeof(spheres)) + ".");
-		rvDebug.Log("Max current Spheres count is " + to_string(value/sizeof(Sphere)) + ".");
+		rvDebug.Log("Max current Spheres count is " + to_string(value / sizeof(Sphere)) + ".");
 
 
 		//Copy data to OpenGL
@@ -486,11 +523,16 @@ GLint rav::RayTracer::Setup(int width, int height, int depth)
 GLint rav::RayTracer::Compute()
 {
 	//clearPass(screenBuffer);
-	
+
+	////Copy data to OpenGL
+	//glGenBuffers(1, &raysBuffer);
+	//glBindBuffer(GL_SHADER_STORAGE_BUFFER, raysBuffer);
+	//glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(Ray) * raysSize, rays, GL_DYNAMIC_COPY);
+
 	for (size_t i = 0; i < depthLevel; i++)
 	{
 
-		collisionPass();
+		collisionPass(i);
 
 		shadingPass(i);
 
