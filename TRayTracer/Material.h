@@ -3,7 +3,7 @@
 
 struct Material
 {
-	glm_vec4 color;						//RGBA with A beeing refraction coeficient
-	glm_vec4 difSpecAmbiCoefShinness;	//Difuse, specular and ambient coeficients and shinness strength
-	glm_vec4 refrIndexReflCoef;			//Refraction Index and reflection coeficients
+	glm_vec4 diffColAlpha;				//Difuse color and refraction coeficient (transparency)
+	glm_vec4 diffSpecAmbiCoefShinness;	//Difuse, Specular and Ambient Coeficient and Shinness power
+	glm_vec4 refrIndexReflCoef;			//Refraction Index, Reflaction Coeficient and two padding
 };

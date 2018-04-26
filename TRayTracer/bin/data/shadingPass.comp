@@ -3,10 +3,10 @@
 layout(local_size_x = 1, local_size_y = 1) in;
 layout(rgba32f, binding = 0) uniform image2D img_output;
 
-uniform float time;
-uniform int depthLevel;
-uniform int workGroupWidth;
-uniform vec4 ambientColour;
+layout(location=0) uniform float time;
+layout(location=1) uniform int depthLevel;
+layout(location=2) uniform int workGroupWidth;
+layout(location=3) uniform vec4 ambientColour;
 
 struct RayHit
 {
@@ -38,10 +38,9 @@ layout (std140) buffer sBuffer
 vec3 lightPos = vec3(0.0, 0.0, 0.0);
 vec4 lightColor = vec4(1.0, 1.0, 1.0, 1.0);
 
-//Returns 0 when equal and 1 when not
-vec4 when_neq(vec4 x, vec4 y) {
-  return abs(sign(x - y));
-}
+//===========AUXILIAR=FUNCTIONS===========//
+//These are implemented in hardware, that's why they use vec4s
+//Could stack 4 values at a time for comparisong
 
 vec4 shade(vec3 point, vec3 normal, vec3 viewDir, int objId) {
 
@@ -57,7 +56,7 @@ vec4 shade(vec3 point, vec3 normal, vec3 viewDir, int objId) {
 		float diffuse = clamp(dot(lightDir, normal), 0, 1);
 		vec4 id = kd * diffuse * diffuseColor * lightColor;
 
-		//specular TODO:review this
+		//specular TODO: review this
 		float ks = spheres[objId].specDiffAmbiCoefShinness.x;
 		float specullarPower = spheres[objId].specDiffAmbiCoefShinness.w;
 
@@ -73,21 +72,21 @@ vec4 shade(vec3 point, vec3 normal, vec3 viewDir, int objId) {
 
 void main() {
 	// base pixel colour for image
-	vec4 pixel = vec4(0.0f, 0.4509803921568627f, 0.8980392156862745f, 1.0);
+	vec4 pixel = const vec4(0.0f, 0.4509803921568627f, 0.8980392156862745f, 1.0);
 
 	// get index in global work group i.e x,y position
-	ivec2 global_coords = ivec2(gl_GlobalInvocationID.xy);
+	const ivec2 global_coords = ivec2(gl_GlobalInvocationID.xy);
 
 	//Get working ray id
-	int hitId = global_coords.x + global_coords.y * workGroupWidth;
+	const int hitId = global_coords.x + global_coords.y * workGroupWidth;
 
 	//Get texture pixel coords from hit
-	ivec2 pixelCoords = hits[hitId].pixelCoordsObjIdType.xy;
+	const ivec2 pixelCoords = hits[hitId].pixelCoordsObjIdType.xy;
 
 	//Get object id from hit
-	int objId = hits[hitId].pixelCoordsObjIdType.z;
+	const int objId = hits[hitId].pixelCoordsObjIdType.z;
 
-	if(objId != -1)
+	if (objId != -1) //TODO: OPTIMIZE THIS!
 	{
 		vec3 hitPos = hits[hitId].hitAndWeight.xyz;
 		vec3 hitNor = hits[hitId].normal.xyz;
@@ -97,8 +96,11 @@ void main() {
 		pixel = shade(hitPos, hitNor, viewDir, objId);
 	}
 
+	//Get last pass pixel (only if this is not the first pass)
+	vec4 lastPixel = imageLoad(img_output, pixelCoords) * (1 - step(depthLevel, 0));
+
 	//Calculate final pass pixel
-	vec4 outPixel = imageLoad(img_output, pixelCoords) * when_neq(vec4(depthLevel), vec4(0)) + pixel * hits[hitId].hitAndWeight.w;
+	vec4 outPixel = lastPixel + pixel * hits[hitId].hitAndWeight.w;
 
 	imageStore(img_output, pixelCoords, outPixel);
 }

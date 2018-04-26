@@ -271,16 +271,19 @@ GLint rav::RayTracer::collisionPass()
 	//Lunch Compute Shader!
 	glUseProgram(collisionProgram);
 
-	//TODO: PASS THIS TO AN OBJECT MANAGER
-	GLint spheresCountId = glGetUniformLocation(collisionProgram, "spheresCount");
-	glUniform1i(spheresCountId, 7);
-
 	//Update time variable
-	GLint timeLoc = glGetUniformLocation(collisionProgram, "time");
+	//GLint timeLoc = glGetUniformLocation(collisionProgram, "time");
+	GLint timeLoc = 0;
 	glUniform1f(timeLoc, glfwGetTime());
 
+	//TODO: PASS THIS TO AN OBJECT MANAGER
+	//GLint spheresCountId = glGetUniformLocation(collisionProgram, "spheresCount");
+	GLint spheresCountId = 1;
+	glUniform1i(spheresCountId, 7);
+
 	//Update workgroup width variable
-	GLint groupWidthLoc = glGetUniformLocation(collisionProgram, "workGroupWidth");
+	//GLint groupWidthLoc = glGetUniformLocation(collisionProgram, "workGroupWidth");
+	GLint groupWidthLoc = 2;
 	glUniform1i(groupWidthLoc, width);
 
 	//Dispatch compute shader to process
@@ -301,19 +304,23 @@ GLint rav::RayTracer::shadingPass(int depth_level)
 	glBindImageTexture(0, screenBuffer, 0, GL_FALSE, 0, GL_READ_WRITE, GL_RGBA32F);
 
 	//Update time variable
-	GLint timeLoc = glGetUniformLocation(shadingProgram, "time");
+	//GLint timeLoc = glGetUniformLocation(shadingProgram, "time");
+	GLint timeLoc = 0;
 	glUniform1f(timeLoc, glfwGetTime());
 
-	//Update workgroup width
-	GLint groupWidthLoc = glGetUniformLocation(shadingProgram, "workGroupWidth");
-	glUniform1i(groupWidthLoc, width);
-
 	//Update depth level
-	GLint depthLevelLoc = glGetUniformLocation(shadingProgram, "depthLevel");
+	//GLint depthLevelLoc = glGetUniformLocation(shadingProgram, "depthLevel");
+	GLint depthLevelLoc = 1;
 	glUniform1i(depthLevelLoc, depth_level);
 
+	//Update workgroup width
+	//GLint groupWidthLoc = glGetUniformLocation(shadingProgram, "workGroupWidth");
+	GLint groupWidthLoc = 2;
+	glUniform1i(groupWidthLoc, width);
+
 	//Update ambient colour
-	GLint ambientColourLoc = glGetUniformLocation(shadingProgram, "ambientColour");
+	//GLint ambientColourLoc = glGetUniformLocation(shadingProgram, "ambientColour");
+	GLint ambientColourLoc = 3;
 	glUniform4f(ambientColourLoc, 1.0f, 1.0f, 1.0f, 1.0f);
 
 	//Dispatch compute shader to process

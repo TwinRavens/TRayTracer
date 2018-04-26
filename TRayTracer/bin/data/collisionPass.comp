@@ -2,9 +2,9 @@
 
 layout(local_size_x = 1, local_size_y = 1) in;
 
-uniform float time;
-uniform int spheresCount;
-uniform int workGroupWidth;
+layout(location=0) uniform float time;
+layout(location=1) uniform int spheresCount;
+layout(location=2) uniform int workGroupWidth;
 
 struct Ray
 {
@@ -44,32 +44,56 @@ layout (std140) buffer sBuffer
 	Spheres spheres[];
 };
 
+//===========AUXILIAR=FUNCTIONS===========//
+//These are implemented in hardware, that's why they use vec4s
+//Could stack 4 values at a time for comparisong
+
+//Returns 1 when x equals y and 0 when not
+vec4 when_eq(vec4 x, vec4 y) {
+  return 1.0 - abs(sign(x - y));
+}
+
+//Returns 0 when x equals y and 1 when not
+vec4 when_neq(vec4 x, vec4 y) {
+  return abs(sign(x - y));
+}
+
+//Returns 1 when x is greater then y and 0 when equal or smaller
+vec4 when_gt(vec4 x, vec4 y) {
+  return max(sign(x - y), 0.0);
+}
+
+//Returns 0 when x is greater or equal then y and 1 when smaller
+vec4 when_le(vec4 x, vec4 y) {
+  return 1.0 - when_gt(x, y);
+}
+
+
 void main()
 {
 	// base pixel colour for image
-	vec4 pixel = vec4(0.0f, 0.4509803921568627f, 0.8980392156862745f, 1.0f);
+	vec4 pixel = const vec4(0.0f, 0.4509803921568627f, 0.8980392156862745f, 1.0f);
 
 	// get index in global work group i.e x,y position
-	ivec2 global_coords = ivec2(gl_GlobalInvocationID.xy);
+	const ivec2 global_coords = ivec2(gl_GlobalInvocationID.xy);
 
 	//Get working ray id
-	int rayId = global_coords.x + global_coords.y * workGroupWidth;
-	ivec2 pixelCoords = rays[rayId].pixelCoords.xy;
+	const int rayId = global_coords.x + global_coords.y * workGroupWidth;
+	const ivec2 pixelCoords = rays[rayId].pixelCoords.xy;
 
 	//define camera points
 	vec3 cameraOrigin = rays[rayId].origAndWght.xyz;
-	vec3 cameraDir = rays[rayId].dir.xyz; // ortho
+	vec3 cameraDir = rays[rayId].dir.xyz;
 
 	int indexClosestSphere = -1;
 	float closestDelta = 4294967296.0;
 
+	//TODO: use float variables as IDs when possible and do comparations 4 by 4 (hardware implemented)
 	for(int i = 0; i < spheresCount; i++)
 	{
 		//define sphere
 		vec3 sphereCenter = spheres[i].posAndScale.xyz;
-		//vec3 sphereCenter = vec3(i * 5 - 15, sin(time + i*0.5f) * 3, -10.0);
 		float sphereRadius = spheres[i].posAndScale.w;
-		//float sphereRadius = 1;
 
 		//region collision with sphere
 		vec3 omc = cameraOrigin - sphereCenter; 
@@ -77,14 +101,23 @@ void main()
 		float c = dot(omc, omc) - sphereRadius * sphereRadius;
 		float delta = b * b - c;
 
+		//When delta is positive, calculate hitT, otherwise leave zero
+		float hitT = step(0, delta) * (-b - delta); //SMALL PERFORMANCE GAIN WITH THIS ONE
+
+		//PERFORMANCE LOST WITH THIS ONE - TODO: EVALUATE THIS AND TRY MORE PERFORMANCE GAINS
+		//Returns 1 when hit is the closest hit and 0 when not
+//		float isClosestHit = (step(hitT, closestDelta)*(1-step(hitT, 1)));
+//		indexClosestSphere = mix(i, indexClosestSphere, (1 - isClosestHit));
+//		closestDelta = mix(hitT, closestDelta, 1-isClosestHit);
+
 		// hit one or both sides
-		if (delta >= 0.0) {
-			float hitT = -b - delta;
-			if(hitT < closestDelta && hitT > 1) {
+//		if (delta >= 0.0) {			<======OPTIMIZED!
+//			hitT = -b - delta;
+			if (hitT < closestDelta && hitT > 1) { //TODO: OPTIMIZE THIS!
 				indexClosestSphere = i;
 				closestDelta = hitT;
 			}
-		}
+//		}
 	}
 
 	if(indexClosestSphere != -1)
@@ -93,16 +126,11 @@ void main()
 		//vec3 sphereCenter = vec3(indexClosestSphere * 5 - 15, sin(time + indexClosestSphere*0.5f) * 3, -10.0);
 		float sphereRadius = spheres[indexClosestSphere].posAndScale.w;
 
-		vec3 hit = vec3(cameraOrigin.x + cameraDir.x * closestDelta, cameraOrigin.y + cameraDir.y * closestDelta, cameraOrigin.z + cameraDir.z * closestDelta);
-		vec3 normal = vec3((hit.x - sphereCenter.x)/sphereRadius,  (hit.y - sphereCenter.y)/sphereRadius, (hit.z - sphereCenter.z)/sphereRadius); 
+		vec3 hit = cameraOrigin + cameraDir * closestDelta;
+		vec3 normal = (hit-sphereCenter);
 		normal = normalize(normal);
 
-		//Values to define
-		vec4 hitAndWeight;
-		vec4 norAndId;
-		int objId;
-		int objTypeId;
-
+		//Store data in Raycast Hit structures
 		hits[rayId].hitAndWeight = vec4(hit, rays[rayId].origAndWght.w);
 		hits[rayId].normal = vec4(normal, 0);
 		hits[rayId].viewDir = vec4(cameraDir, 0);
@@ -110,7 +138,7 @@ void main()
 	}
 	else
 	{
-		hits[rayId].hitAndWeight = vec4(vec3(0), rays[rayId].origAndWght.w);
+		hits[rayId].hitAndWeight = rays[rayId].origAndWght;
 		hits[rayId].pixelCoordsObjIdType = ivec4(pixelCoords.xy, indexClosestSphere, 0);
 	}
 }
