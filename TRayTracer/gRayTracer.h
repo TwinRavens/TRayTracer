@@ -28,7 +28,7 @@ namespace rav
 		static GLint collisionProgram, shadingProgram;
 
 		//Screen data
-		static int width, height, raysSize;
+		static int width, height, raysSize, depthLevel;
 		static GLuint screenBuffer;
 
 		//Shader Storage Buffer Objects
@@ -51,10 +51,10 @@ namespace rav
 
 	public:
 		//Set up screen buffers, load shaders
-		static GLint Setup(int screen_width, int screen_height);
+		static GLint Setup(int screen_width, int screen_height, int depth_level = 4);
 
 		//Renders a full image with given trace depth
-		static GLint Compute(int depth_level = 4);
+		static GLint Compute();
 
 	};
 

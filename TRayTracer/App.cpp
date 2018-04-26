@@ -103,7 +103,7 @@ int App::Initialize(cint &width, cint &height, str name, bool fullscreen)
 	glClearColor(0.0f, 0.4509803921568627f, 0.8980392156862745f, 1.0f);
 
 	//Initialize Raytracer
-	RayTracer::Setup(width, height);
+	RayTracer::Setup(width, height, 2);
 
 	//Return no error message
 	return 0;
@@ -204,7 +204,7 @@ int App::Run()
 		_update_fps_counter(window);
 
 		//===============COMPUT RAYTRACING HERE====================
-		GLint raytracePreview = RayTracer::Compute(2);
+		GLint raytracePreview = RayTracer::Compute();
 		//===============COMPUT RAYTRACING HERE====================
 
 #pragma region Draw Raytracer Output
