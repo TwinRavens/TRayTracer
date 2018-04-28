@@ -15,6 +15,7 @@
 //Raytracer Includes
 #include "Ray.h"
 #include "Primitives.h"
+#include "Material.h"
 
 //Defines
 #define MAX_DEPTH 10

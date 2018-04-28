@@ -7,7 +7,7 @@ int main()
 	int errc = 0;
 
 	//Initialize App
-	errc = rvApp.Initialize(1920, 1080, "TRayTracer", false);
+	errc = rvApp.Initialize(1920, 1080, "TRayTracer", false, false);
 
 	//Run App if no error
 	if (!errc)

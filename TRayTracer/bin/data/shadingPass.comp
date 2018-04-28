@@ -1,6 +1,6 @@
 #version 430
 
-layout(local_size_x = 1, local_size_y = 1) in;
+layout(local_size_x = 256, local_size_y = 1, local_size_z = 1) in;
 layout(rgba32f, binding = 0) uniform image2D img_output;
 
 layout(location=0) uniform float time;
@@ -34,17 +34,16 @@ layout (std140) buffer rHitBuffer
 	RayHit hits[];
 };
 
-struct Spheres
+struct Material
 {
-	vec4 posAndScale;
 	vec4 diffColAlpha;
 	vec4 specDiffAmbiCoefShinness;
 	vec4 refrIndexReflCoef; //And two padding
 };
 
-layout (std140) buffer sBuffer
+layout (std140) buffer sMatBuffer
 {
-	Spheres spheres[];
+	Material materials[];
 };
 
 //define light
@@ -63,20 +62,20 @@ float when_neq(float x, float y) {
 vec4 shade(vec3 point, vec3 normal, vec3 viewDir, int objId) {
 
 		//ambient
-		float ka = spheres[objId].specDiffAmbiCoefShinness.z;  //coeficient of ambient light
+		float ka = materials[objId].specDiffAmbiCoefShinness.z;  //coeficient of ambient light
 		vec4 ia = ambientColour * ka;
 
 		//diffuse
-		float kd = spheres[objId].specDiffAmbiCoefShinness.y; // coeficient of diffuse light
-		vec4 diffuseColor = vec4(spheres[objId].diffColAlpha.rgb, 1); // color from the object
+		float kd = materials[objId].specDiffAmbiCoefShinness.y; // coeficient of diffuse light
+		vec4 diffuseColor = vec4(materials[objId].diffColAlpha.rgb, 1); // color from the object
 
 		vec3 lightDir = normalize(lightPos - point);
 		float diffuse = clamp(dot(lightDir, normal), 0, 1);
 		vec4 id = kd * diffuse * diffuseColor * lightColor;
 
 		//specular TODO: review this
-		float ks = spheres[objId].specDiffAmbiCoefShinness.x;
-		float specullarPower = spheres[objId].specDiffAmbiCoefShinness.w;
+		float ks = materials[objId].specDiffAmbiCoefShinness.x;
+		float specullarPower = materials[objId].specDiffAmbiCoefShinness.w;
 
 		//Reflect = lightDir - 2 * normal * dot(normal, lightDir)
 		//Ou normalize(2 * normal * dot(normal, lightDir) - lightDir) quando o raio vem da fonte de luz
@@ -92,11 +91,8 @@ void main() {
 	// base pixel colour for image
 	vec4 pixel = const vec4(0);
 
-	// get index in global work group i.e x,y position
-	const ivec3 global_coords = ivec3(gl_GlobalInvocationID.xyz);
-
 	//Get working ray id
-	const int hitId = (global_coords.x + global_coords.y * workGroupWidth) * (depthLevel+1) + global_coords.z;
+	const int hitId = int(gl_GlobalInvocationID.x);
 
 	//Get texture pixel coords from hit
 	const ivec2 pixelCoords = hits[hitId].pixelCoordsObjIdType.xy;
@@ -106,10 +102,6 @@ void main() {
 
 	const float rayContribution = hits[hitId].hitAndWeight.w;
 
-	//General id
-	int id = global_coords.x + global_coords.y * workGroupWidth;
-	int nextDepthId = id * (depthLevel+1) * 2 + (global_coords.z * 2);
-
 	if (objId != -1) //TODO: OPTIMIZE THIS!
 	{
 		vec3 hitPos = hits[hitId].hitAndWeight.xyz;
@@ -117,28 +109,24 @@ void main() {
 		vec3 viewDir = hits[hitId].viewDir.xyz;
 		
 		//Do proper shading
-		pixel = mix(vec4(0), shade(hitPos, hitNor, viewDir, objId), spheres[objId].diffColAlpha.a);
+		pixel = mix(vec4(0), shade(hitPos, hitNor, viewDir, objId), materials[objId].diffColAlpha.a);
 		
 		//Reflection
-		int idReflex = nextDepthId;
-
 		vec3 reflectedRayDir = reflect(viewDir, hitNor);
-		float reflectContribution = rayContribution * spheres[objId].refrIndexReflCoef.y;
+		float reflectContribution = rayContribution * materials[objId].refrIndexReflCoef.y;
 		
-		rays[idReflex] = Ray(vec4(hitPos, reflectContribution), vec4(reflectedRayDir, 0), pixelCoords.xyxy);
+		rays[hitId*2+0] = Ray(vec4(hitPos, reflectContribution), vec4(reflectedRayDir, 0), pixelCoords.xyxy);
 
 		//Refraction
-		int idRefrac = nextDepthId + 1;
+		vec3 refractRayDir = refract(viewDir, hitNor, materials[objId].refrIndexReflCoef.x);
+		float refractContribution = rayContribution * (1.0 - materials[objId].diffColAlpha.w);
 
-		vec3 refractRayDir = refract(viewDir, hitNor, spheres[objId].refrIndexReflCoef.x);
-		float refractContribution = rayContribution * (1.0 - spheres[objId].diffColAlpha.w);
-
-		rays[idRefrac] = Ray(vec4(hitPos, refractContribution), vec4(refractRayDir, 0), pixelCoords.xyxy);
+		rays[hitId*2+1] = Ray(vec4(hitPos, refractContribution), vec4(refractRayDir, 0), pixelCoords.xyxy);
 	}
 	else
 	{
-		rays[nextDepthId] = Ray(vec4(0), vec4(0), pixelCoords.xyxy);
-		rays[nextDepthId+1] = Ray(vec4(0), vec4(0), pixelCoords.xyxy);
+		rays[hitId*2+0] = Ray(vec4(0), vec4(0), pixelCoords.xyxy);
+		rays[hitId*2+1] = Ray(vec4(0), vec4(0), pixelCoords.xyxy);
 	}
 
 	//Get last pass pixel (only if this is not the first pass)

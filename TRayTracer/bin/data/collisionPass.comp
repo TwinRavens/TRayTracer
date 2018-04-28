@@ -1,11 +1,12 @@
 #version 430
 
-layout(local_size_x = 1, local_size_y = 1) in;
+layout(local_size_x = 256, local_size_y = 1, local_size_z = 1) in;
 
 layout(location=0) uniform float time;
 layout(location=1) uniform int spheresCount;
-layout(location=2) uniform int workGroupWidth;
-layout(location=3) uniform int depthLevel;
+layout(location=2) uniform int workGroupWidth = 1920;
+layout(location=3) uniform int workGroupHeight = 1080;
+layout(location=4) uniform int depthLevel;
 
 struct Ray
 {
@@ -35,9 +36,6 @@ layout (std140) buffer rHitBuffer
 struct Spheres
 {
 	vec4 posAndScale;
-	vec4 diffColAlpha;
-	vec4 specDiffAmbiCoefShinness;
-	vec4 refrIndexReflCoef;
 };
 
 layout (std140) buffer sBuffer
@@ -75,16 +73,34 @@ void main()
 	// base pixel colour for image
 	vec4 pixel = const vec4(0.0f, 0.4509803921568627f, 0.8980392156862745f, 1.0f);
 
-	// get index in global work group i.e x,y position
-	const ivec3 global_coords = ivec3(gl_GlobalInvocationID.xyz);
-
 	//Get working ray id
-	const int rayId = (global_coords.x + global_coords.y * workGroupWidth) * (depthLevel+1) + global_coords.z;
-	const ivec2 pixelCoords = rays[rayId].pixelCoords.xy;
+	const int rayId = int(gl_GlobalInvocationID.x);
 
-	//define camera points
-	const vec3 cameraOrigin = rays[rayId].origAndWght.xyz;
-	const vec3 cameraDir = rays[rayId].dir.xyz;
+	//Create ray's if first depth pass
+	if(depthLevel == 0)
+	{
+		const vec2 screenSize = vec2(workGroupWidth, workGroupHeight);
+		const float aspectRatio = screenSize.x / screenSize.y;
+		const float fov = 33.0; //get this from options
+		const float fovScale = tan(radians(fov * 0.5));
+		const ivec2 screen_coord = ivec2(mod(rayId, workGroupWidth), rayId/workGroupWidth);
+		const vec4 origin = { 0, 0, 20, 1 };
+
+		const float x = (2.0 * (screen_coord.x + 0.5) / screenSize.x - 1.0) * aspectRatio * fovScale;
+		const float y = (1.0 - 2.0 * (screen_coord.y + 0.5) / screenSize.y) * fovScale;
+		vec3 dir = vec3( x, y, -1.0f );
+		dir = normalize(dir);
+
+		//Create ray in memory
+		rays[rayId].origAndWght = origin;
+		rays[rayId].dir = vec4(dir, 0);
+		rays[rayId].pixelCoords = screen_coord.xyxy;
+	}
+
+	//Get ray info
+	const ivec2 pixelCoords = rays[rayId].pixelCoords.xy;
+	const vec3 rayOrigin = rays[rayId].origAndWght.xyz;
+	const vec3 rayDir = rays[rayId].dir.xyz;
 
 	int indexClosestSphere = -1;
 	float closestDelta = 4294967296.0;
@@ -97,8 +113,8 @@ void main()
 		float sphereRadius = spheres[i].posAndScale.w;
 
 		//region collision with sphere
-		vec3 omc = cameraOrigin - sphereCenter; 
-		float b = dot(cameraDir, omc);
+		vec3 omc = rayOrigin - sphereCenter; 
+		float b = dot(rayDir, omc);
 		float c = dot(omc, omc) - sphereRadius * sphereRadius;
 		float delta = b * b - c;
 
@@ -127,16 +143,16 @@ void main()
 		//vec3 sphereCenter = vec3(indexClosestSphere * 5 - 15, sin(time + indexClosestSphere*0.5f) * 3, -10.0);
 		float sphereRadius = spheres[indexClosestSphere].posAndScale.w;
 
-		vec3 hit = cameraOrigin + cameraDir * closestDelta;
+		vec3 hit = rayOrigin + rayDir * closestDelta;
 		vec3 normal = (hit-sphereCenter);
 		normal = normalize(normal);
 
 		//Store data in Raycast Hit structures
-		hits[rayId] = RayHit(vec4(hit, rays[rayId].origAndWght.w), vec4(normal, 0), vec4(cameraDir, 0), ivec4(pixelCoords.xy, indexClosestSphere, 1));
+		hits[rayId] = RayHit(vec4(hit, rays[rayId].origAndWght.w), vec4(normal, 0), vec4(rayDir, 0), ivec4(pixelCoords.xy, indexClosestSphere, 1));
 
 	}
 	else
 	{
-		hits[rayId] = RayHit(rays[rayId].origAndWght, vec4(cameraDir, 0), vec4(cameraDir, 0), ivec4(pixelCoords.xy, indexClosestSphere, 1));
+		hits[rayId] = RayHit(rays[rayId].origAndWght, vec4(rayDir, 0), vec4(rayDir, 0), ivec4(pixelCoords.xy, indexClosestSphere, 1));
 	}
 }

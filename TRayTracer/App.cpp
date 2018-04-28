@@ -31,7 +31,7 @@ void _update_fps_counter(GLFWwindow* window) {
 	static int frame_count;
 	double current_seconds = glfwGetTime();
 	double elapsed_seconds = current_seconds - previous_seconds;
-	if (elapsed_seconds > 0.12) {
+	if (elapsed_seconds > 0.01) {
 		previous_seconds = current_seconds;
 		double fps = (double)frame_count / elapsed_seconds;
 		char tmp[128];
@@ -42,7 +42,7 @@ void _update_fps_counter(GLFWwindow* window) {
 	frame_count++;
 }
 
-int App::Initialize(cint &width, cint &height, str name, bool fullscreen)
+int App::Initialize(cint &width, cint &height, str name, bool fullscreen, bool vsync)
 {
 	//Try to initialize GLFW
 	if (!glfwInit())
