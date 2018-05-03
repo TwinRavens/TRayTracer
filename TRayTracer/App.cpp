@@ -103,7 +103,7 @@ int App::Initialize(cint &width, cint &height, str name, bool fullscreen, bool v
 	glClearColor(0.0f, 0.4509803921568627f, 0.8980392156862745f, 1.0f);
 
 	//Initialize Raytracer
-	RayTracer::Setup(width, height, 3);
+	RayTracer::Setup(width, height, 2);
 
 	//Return no error message
 	return 0;
@@ -166,10 +166,10 @@ int App::Run()
 		glBindTexture(GL_TEXTURE_2D, raytracePreview);
 
 		//Bind VAO
-		screenQuadVAO.Bind();
+		screenQuadVAO->Bind();
 
 		//Draw given VBO
-		screenQuadVBO.Draw();
+		screenQuadVBO->Draw();
 
 #pragma endregion
 
@@ -199,6 +199,9 @@ int App::End()
 
 void App::CreateScreenQuad() {
 
+	screenQuadVBO = new VertexBuffer();
+	screenQuadVAO = new VertexArray();
+	
 	GLint vp_loc = rvGetAttributeLoc(defaultPrg, "vertex_position");	//Get attribute location (after linking!)
 	GLint vc_loc = rvGetAttributeLoc(defaultPrg, "vertex_coords");		//Get attribute location (after linking!)
 
@@ -223,7 +226,7 @@ void App::CreateScreenQuad() {
 
 
 	//Add a description to it's buffer
-	screenQuadVBO.AddBufferDescriptor({		//Vertex Position Attribute
+	screenQuadVBO->AddBufferDescriptor({		//Vertex Position Attribute
 		vp_loc,						//Location ID
 		3,							//Size of attribute (3 = XYZ)
 		GL_FLOAT,					//Type of attribute
@@ -231,7 +234,7 @@ void App::CreateScreenQuad() {
 		sizeof(float) * 5,			//Size of buffer block per vertex (3 for XYZ and 2 for UV)
 		(void*)(0 * sizeof(float))	//Stride of 0 bytes (starts at the beginning of the block)
 		});
-	screenQuadVBO.AddBufferDescriptor({		//Vertex UV Attribute
+	screenQuadVBO->AddBufferDescriptor({		//Vertex UV Attribute
 		vc_loc,						//Location ID
 		2,							//Size of attribute (2 = UV)
 		GL_FLOAT,					//Type of attribute
@@ -241,14 +244,14 @@ void App::CreateScreenQuad() {
 		});
 
 	//Copy data to VertexBuffer Object
-	screenQuadVBO.Fill(sizeof(points), points);
+	screenQuadVBO->Fill(sizeof(points), points);
 
 
 	//Enable locations for the created shader program
-	screenQuadVAO.EnableLocations(defaultPrg);
+	screenQuadVAO->EnableLocations(defaultPrg);
 
 	//Use VBO for setting data pointers
-	screenQuadVBO.SetAttributePointers();
+	screenQuadVBO->SetAttributePointers();
 
 }
 

@@ -45,8 +45,8 @@ namespace rav
 		
 		//GLFW Window
 		GLFWwindow* window;
-		VertexArray screenQuadVAO;
-		VertexBuffer screenQuadVBO;
+		VertexArray* screenQuadVAO;
+		VertexBuffer* screenQuadVBO;
 		GLuint defaultPrg;
 
 		void CreateScreenQuad();
