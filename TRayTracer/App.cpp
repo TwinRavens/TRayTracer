@@ -111,6 +111,7 @@ int App::Initialize(cint &width, cint &height, str name, bool fullscreen, bool v
 
 int App::Run()
 {
+#pragma region Default Shaders
 	char* vertex_shader;
 	rvLoadFile("./data/vertex_uv.vs", vertex_shader, true);
 
@@ -122,13 +123,14 @@ int App::Run()
 	GLuint fs = rvCreateShader("fragment_base_vs", fragment_shader, RV_FRAGMENT_SHADER);
 
 	//Create program
-	GLuint pr = rvCreateProgram("test_pr", vs, fs);				//Create program with two shaders attached
+	GLuint defaultPrg = rvCreateProgram("screen_pr", vs, fs);				//Create program with two shaders attached
 	//rvSetAttributeLoc(pr, "vertex_position", 0);				//Set attribute location (before linking!)
 	//rvSetAttributeLoc(pr, "vertex_coords", 1);				//Set attribute location (before linking!)
-	rvLinkProgram(pr);											//Link program
-	GLint vp_loc = rvGetAttributeLoc(pr, "vertex_position");	//Get attribute location (after linking!)
-	GLint vc_loc = rvGetAttributeLoc(pr, "vertex_coords");		//Get attribute location (after linking!)
+	rvLinkProgram(defaultPrg);											//Link program
+	GLint vp_loc = rvGetAttributeLoc(defaultPrg, "vertex_position");	//Get attribute location (after linking!)
+	GLint vc_loc = rvGetAttributeLoc(defaultPrg, "vertex_coords");		//Get attribute location (after linking!)
 
+#pragma endregion
 #pragma region ScreenQuad Generation
 
 	float points[] = {
@@ -151,10 +153,10 @@ int App::Run()
 	};
 
 	//Create VertexBuffer Object
-	VertexBuffer vbo;
+	VertexBuffer screenQuadVBO;
 
 	//Add a description to it's buffer
-	vbo.AddBufferDescriptor({		//Vertex Position Attribute
+	screenQuadVBO.AddBufferDescriptor({		//Vertex Position Attribute
 		vp_loc,						//Location ID
 		3,							//Size of attribute (3 = XYZ)
 		GL_FLOAT,					//Type of attribute
@@ -162,7 +164,7 @@ int App::Run()
 		sizeof(float) * 5,			//Size of buffer block per vertex (3 for XYZ and 2 for UV)
 		(void*)(0 * sizeof(float))	//Stride of 0 bytes (starts at the beginning of the block)
 	});
-	vbo.AddBufferDescriptor({		//Vertex UV Attribute
+	screenQuadVBO.AddBufferDescriptor({		//Vertex UV Attribute
 		vc_loc,						//Location ID
 		2,							//Size of attribute (2 = UV)
 		GL_FLOAT,					//Type of attribute
@@ -172,16 +174,16 @@ int App::Run()
 	});
 
 	//Copy data to VertexBuffer Object
-	vbo.Fill(sizeof(points), points);
+	screenQuadVBO.Fill(sizeof(points), points);
 
 	//Create VertexArray Object
-	VertexArray vao;
+	VertexArray screenQuadVAO;
 
 	//Enable locations for the created shader program
-	vao.EnableLocations(pr);
+	screenQuadVAO.EnableLocations(defaultPrg);
 
 	//Use VBO for setting data pointers
-	vbo.SetAttributePointers();
+	screenQuadVBO.SetAttributePointers();
 
 #pragma endregion
 
@@ -213,17 +215,17 @@ int App::Run()
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		//Use shader program
-		rvUseProgram(pr);
+		rvUseProgram(defaultPrg);
 
 		//Texture binding
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, raytracePreview);
 
 		//Bind VAO
-		vao.Bind();
+		screenQuadVAO.Bind();
 
 		//Draw given VBO
-		vbo.Draw();
+		screenQuadVBO.Draw();
 
 #pragma endregion
 
