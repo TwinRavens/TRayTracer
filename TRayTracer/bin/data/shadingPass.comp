@@ -92,7 +92,7 @@ void main() {
 	vec4 pixel = const vec4(0);
 
 	//Get working ray id
-	const int hitId = int(gl_GlobalInvocationID.x);
+	const int hitId = int(gl_GlobalInvocationID.x*(depthLevel+1)+gl_GlobalInvocationID.y);
 
 	//Get texture pixel coords from hit
 	const ivec2 pixelCoords = hits[hitId].pixelCoordsObjIdType.xy;
