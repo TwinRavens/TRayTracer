@@ -45,7 +45,11 @@ namespace rav
 		
 		//GLFW Window
 		GLFWwindow* window;
+		VertexArray screenQuadVAO;
+		VertexBuffer screenQuadVBO;
+		GLuint defaultPrg;
 
+		void CreateScreenQuad();
 	public:
 		//GLFW error callback
 		static void error_callback(int error, const char* description)
@@ -75,5 +79,6 @@ namespace rav
 
 		//Clear all resources before existing
 		int End();
+
 	};
 }

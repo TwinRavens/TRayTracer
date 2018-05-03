@@ -123,69 +123,13 @@ int App::Run()
 	GLuint fs = rvCreateShader("fragment_base_vs", fragment_shader, RV_FRAGMENT_SHADER);
 
 	//Create program
-	GLuint defaultPrg = rvCreateProgram("screen_pr", vs, fs);				//Create program with two shaders attached
+	defaultPrg = rvCreateProgram("screen_pr", vs, fs);				//Create program with two shaders attached
 	//rvSetAttributeLoc(pr, "vertex_position", 0);				//Set attribute location (before linking!)
 	//rvSetAttributeLoc(pr, "vertex_coords", 1);				//Set attribute location (before linking!)
 	rvLinkProgram(defaultPrg);											//Link program
-	GLint vp_loc = rvGetAttributeLoc(defaultPrg, "vertex_position");	//Get attribute location (after linking!)
-	GLint vc_loc = rvGetAttributeLoc(defaultPrg, "vertex_coords");		//Get attribute location (after linking!)
 
 #pragma endregion
-#pragma region ScreenQuad Generation
-
-	float points[] = {
-		//Position			  //UV
-		-1.0f, -1.0f,  0.0f,	0.0f,  0.0f, //Bottom left
-		1.0f,  1.0f,  0.0f,	1.0f,  1.0f, //Top-right
-		-1.0f,  1.0f,  0.0f,	0.0f,  1.0f, //Top-left
-		-1.0f, -1.0f,  0.0f,	0.0f,  0.0f, //Bottom-left
-		1.0f, -1.0f,  0.0f,	1.0f,  0.0f, //Bottom-right
-		1.0f,  1.0f,  0.0f,	1.0f,  1.0f  //Top-right
-	};
-
-
-	//Identity Matrix
-	float matrix[] = {
-		1, 0, 0, 0,
-		0, 1, 0, 0,
-		0, 0, 1, 0,
-		0, 0, 0, 1
-	};
-
-	//Create VertexBuffer Object
-	VertexBuffer screenQuadVBO;
-
-	//Add a description to it's buffer
-	screenQuadVBO.AddBufferDescriptor({		//Vertex Position Attribute
-		vp_loc,						//Location ID
-		3,							//Size of attribute (3 = XYZ)
-		GL_FLOAT,					//Type of attribute
-		false,						//Not normalized
-		sizeof(float) * 5,			//Size of buffer block per vertex (3 for XYZ and 2 for UV)
-		(void*)(0 * sizeof(float))	//Stride of 0 bytes (starts at the beginning of the block)
-	});
-	screenQuadVBO.AddBufferDescriptor({		//Vertex UV Attribute
-		vc_loc,						//Location ID
-		2,							//Size of attribute (2 = UV)
-		GL_FLOAT,					//Type of attribute
-		false,						//Not normalized
-		sizeof(float) * 5,			//Size of buffer block per vertex (3 for XYZ and 2 for UV)
-		(void*)(3 * sizeof(float))	//Stride of 3 bytes (starts 3 bytes away from the beginning of the block)
-	});
-
-	//Copy data to VertexBuffer Object
-	screenQuadVBO.Fill(sizeof(points), points);
-
-	//Create VertexArray Object
-	VertexArray screenQuadVAO;
-
-	//Enable locations for the created shader program
-	screenQuadVAO.EnableLocations(defaultPrg);
-
-	//Use VBO for setting data pointers
-	screenQuadVBO.SetAttributePointers();
-
-#pragma endregion
+	CreateScreenQuad();
 
 	////Load texture with STB Image
 	//int width, height, nrChannels;
@@ -251,3 +195,60 @@ int App::End()
 {
 	return 0;
 }
+
+
+void App::CreateScreenQuad() {
+
+	GLint vp_loc = rvGetAttributeLoc(defaultPrg, "vertex_position");	//Get attribute location (after linking!)
+	GLint vc_loc = rvGetAttributeLoc(defaultPrg, "vertex_coords");		//Get attribute location (after linking!)
+
+	float points[] = {
+		//Position			  //UV
+		-1.0f, -1.0f,  0.0f,	0.0f,  0.0f, //Bottom left
+		1.0f,  1.0f,  0.0f,	1.0f,  1.0f, //Top-right
+		-1.0f,  1.0f,  0.0f,	0.0f,  1.0f, //Top-left
+		-1.0f, -1.0f,  0.0f,	0.0f,  0.0f, //Bottom-left
+		1.0f, -1.0f,  0.0f,	1.0f,  0.0f, //Bottom-right
+		1.0f,  1.0f,  0.0f,	1.0f,  1.0f  //Top-right
+	};
+
+
+	//Identity Matrix
+	float matrix[] = {
+		1, 0, 0, 0,
+		0, 1, 0, 0,
+		0, 0, 1, 0,
+		0, 0, 0, 1
+	};
+
+
+	//Add a description to it's buffer
+	screenQuadVBO.AddBufferDescriptor({		//Vertex Position Attribute
+		vp_loc,						//Location ID
+		3,							//Size of attribute (3 = XYZ)
+		GL_FLOAT,					//Type of attribute
+		false,						//Not normalized
+		sizeof(float) * 5,			//Size of buffer block per vertex (3 for XYZ and 2 for UV)
+		(void*)(0 * sizeof(float))	//Stride of 0 bytes (starts at the beginning of the block)
+		});
+	screenQuadVBO.AddBufferDescriptor({		//Vertex UV Attribute
+		vc_loc,						//Location ID
+		2,							//Size of attribute (2 = UV)
+		GL_FLOAT,					//Type of attribute
+		false,						//Not normalized
+		sizeof(float) * 5,			//Size of buffer block per vertex (3 for XYZ and 2 for UV)
+		(void*)(3 * sizeof(float))	//Stride of 3 bytes (starts 3 bytes away from the beginning of the block)
+		});
+
+	//Copy data to VertexBuffer Object
+	screenQuadVBO.Fill(sizeof(points), points);
+
+
+	//Enable locations for the created shader program
+	screenQuadVAO.EnableLocations(defaultPrg);
+
+	//Use VBO for setting data pointers
+	screenQuadVBO.SetAttributePointers();
+
+}
+
