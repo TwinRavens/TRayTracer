@@ -31,7 +31,7 @@ void _update_fps_counter(GLFWwindow* window) {
 	static int frame_count;
 	double current_seconds = glfwGetTime();
 	double elapsed_seconds = current_seconds - previous_seconds;
-	if (elapsed_seconds > 0.25) {
+	if (elapsed_seconds > 0.01) {
 		previous_seconds = current_seconds;
 		double fps = (double)frame_count / elapsed_seconds;
 		char tmp[128];
@@ -42,7 +42,7 @@ void _update_fps_counter(GLFWwindow* window) {
 	frame_count++;
 }
 
-int App::Initialize(cint &width, cint &height, str name, bool fullscreen)
+int App::Initialize(cint &width, cint &height, str name, bool fullscreen, bool vsync)
 {
 	//Try to initialize GLFW
 	if (!glfwInit())
@@ -102,36 +102,20 @@ int App::Initialize(cint &width, cint &height, str name, bool fullscreen)
 	//Set a nice blue background
 	glClearColor(0.0f, 0.4509803921568627f, 0.8980392156862745f, 1.0f);
 
+	//Initialize Raytracer
+	RayTracer::Setup(width, height, 2);
+
 	//Return no error message
 	return 0;
 }
 
 int App::Run()
 {
-	float points[] = {
-		//Position			  //UV
-   -1.0f, -1.0f,  0.0f,	0.0f,  0.0f, //Bottom left
-	1.0f,  1.0f,  0.0f,	1.0f,  1.0f, //Top-right
-   -1.0f,  1.0f,  0.0f,	0.0f,  1.0f, //Top-left
-   -1.0f, -1.0f,  0.0f,	0.0f,  0.0f, //Bottom-left
-	1.0f, -1.0f,  0.0f,	1.0f,  0.0f, //Bottom-right
-	1.0f,  1.0f,  0.0f,	1.0f,  1.0f  //Top-right
-	};
-
-
-	//Identity Matrix
-	float matrix[] = {
-		1, 0, 0, 0,
-		0, 1, 0, 0,
-		0, 0, 1, 0,
-		0, 0, 0, 1
-	};
-
 	char* vertex_shader;
-	rvLoadFile("vertex_uv.vs", vertex_shader, true);
+	rvLoadFile("./data/vertex_uv.vs", vertex_shader, true);
 
 	char* fragment_shader;
-	rvLoadFile("fragment_base.fs", fragment_shader, true);
+	rvLoadFile("./data/fragment_base.fs", fragment_shader, true);
 
 	GLuint vs = rvCreateShader("vertex_uv_vs", vertex_shader, RV_VERTEX_SHADER);
 
@@ -144,6 +128,27 @@ int App::Run()
 	rvLinkProgram(pr);											//Link program
 	GLint vp_loc = rvGetAttributeLoc(pr, "vertex_position");	//Get attribute location (after linking!)
 	GLint vc_loc = rvGetAttributeLoc(pr, "vertex_coords");		//Get attribute location (after linking!)
+
+#pragma region ScreenQuad Generation
+
+	float points[] = {
+		//Position			  //UV
+		-1.0f, -1.0f,  0.0f,	0.0f,  0.0f, //Bottom left
+		1.0f,  1.0f,  0.0f,	1.0f,  1.0f, //Top-right
+		-1.0f,  1.0f,  0.0f,	0.0f,  1.0f, //Top-left
+		-1.0f, -1.0f,  0.0f,	0.0f,  0.0f, //Bottom-left
+		1.0f, -1.0f,  0.0f,	1.0f,  0.0f, //Bottom-right
+		1.0f,  1.0f,  0.0f,	1.0f,  1.0f  //Top-right
+	};
+
+
+	//Identity Matrix
+	float matrix[] = {
+		1, 0, 0, 0,
+		0, 1, 0, 0,
+		0, 0, 1, 0,
+		0, 0, 0, 1
+	};
 
 	//Create VertexBuffer Object
 	VertexBuffer vbo;
@@ -178,24 +183,7 @@ int App::Run()
 	//Use VBO for setting data pointers
 	vbo.SetAttributePointers();
 
-	//Generate empty texture
-	unsigned int texture;
-	glGenTextures(1, &texture);
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, texture);
-
-	//Define texture parameters
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);		//Repeat out of bounds UVs
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);		//Repeat out of bounds UVs
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);	//Set Image sampling filtering
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);	//Set Image sampling filtering
-
-	//Set Image sizes
-	int width = 1920, height = 1080;
-
-	//Bind Image Texture to layout 0
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, width, height, 0, GL_RGBA, GL_FLOAT, NULL);
-	glBindImageTexture(0, texture, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA32F);
+#pragma endregion
 
 	////Load texture with STB Image
 	//int width, height, nrChannels;
@@ -211,226 +199,15 @@ int App::Run()
 	//	rvDebug.Log("Failed to load texture", RV_ERROR_MESSAGE);
 	//}
 
-	//Get Compute Shader Variables
-#pragma region Setup Compute Shader Variables
-	int work_grp_cnt[3];
-
-	glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_COUNT, 0, &work_grp_cnt[0]);
-	glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_COUNT, 1, &work_grp_cnt[1]);
-	glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_COUNT, 2, &work_grp_cnt[2]);
-
-	printf("max global (total) work group size x:%i y:%i z:%i\n",
-		work_grp_cnt[0], work_grp_cnt[1], work_grp_cnt[2]);
-
-	int work_grp_size[3];
-
-	//
-	glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_SIZE, 0, &work_grp_size[0]);
-	glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_SIZE, 1, &work_grp_size[1]);
-	glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_SIZE, 2, &work_grp_size[2]);
-
-	printf("max local (in one shader) work group sizes x:%i y:%i z:%i\n",
-		work_grp_size[0], work_grp_size[1], work_grp_size[2]);
-
-	//
-	int work_grp_inv;
-
-	glGetIntegerv(GL_MAX_COMPUTE_WORK_GROUP_INVOCATIONS, &work_grp_inv);
-	printf("max local work group invocations %i\n", work_grp_inv);
-
-#pragma endregion
-
-
-#pragma region Load Compute Shader
-	//Load Compute Shader
-	char* compute_shader;
-	rvLoadFile("compute_shader.comp", compute_shader, true);
-
-	GLuint ray_shader = glCreateShader(GL_COMPUTE_SHADER);
-	glShaderSource(ray_shader, 1, &compute_shader, NULL);
-	glCompileShader(ray_shader);
-	GLint isCompiled = 0;
-	glGetShaderiv(ray_shader, GL_COMPILE_STATUS, &isCompiled);
-
-	//If got an error
-	if (isCompiled == GL_FALSE)
-	{
-		//Get size of info log
-		GLint maxLength = 0;
-		glGetShaderiv(ray_shader, GL_INFO_LOG_LENGTH, &maxLength);
-
-		//The maxLength includes the NULL character
-		GLchar *errorLog = new GLchar[maxLength];
-		glGetShaderInfoLog(ray_shader, maxLength, &maxLength, &errorLog[0]);
-
-		//Error header
-		rvDebug.Log("Error compiling compute shader ", RV_ERROR_MESSAGE);
-
-		//Create message
-		string msg((const char*)errorLog);
-
-		//Pop last \0 char
-		msg.pop_back();
-
-		//Log Error through Debugger
-		rvDebug.Log(msg, Debug::Error);
-
-		//Don't leak the shader
-		glDeleteShader(ray_shader);
-	}
-	else
-	{
-		rvDebug.Log("Sucessfully compiled!\n");
-	}
-
-#pragma endregion
-
-	GLuint ray_program = glCreateProgram();
-	glAttachShader(ray_program, ray_shader);
-	glLinkProgram(ray_program);
-
-#pragma region Passing Rays Buffer to Shader
-	{
-
-#if false //Ortographic camera rays
-		//Ortographic camera rays
-		Ray* rays = new Ray[width*height];
-		{
-			int rayId = 0;
-			float xStep = 2.0f / (width + 1), yStep = 2.0f / (height + 1);
-			float xPos = -1.0f + xStep, yPos = -1.0f + yStep;
-			for (size_t i = 0; i < height; i++)
-			{
-				for (size_t j = 0; j < width; j++)
-				{
-					rays[rayId].origin = { xPos, yPos, 0, 0 };
-					rays[rayId].dirAndId = { 0, 0, -1, (float)rayId };
-					rayId++;
-					xPos += xStep;
-				}
-				xPos = -1.0f + xStep;
-				yPos += yStep;
-			}
-		}
-#else //Perspective
-		//Perspective
-		Ray* rays = new Ray[width*height];
-		{
-			float aspectRatio = width / (float)height;
-			float fov = 33; //get this from options
-			float fovScale = tan(glm::radians(fov * 0.5));
-			//glm::vec3 origin = { 0, 0, 0 };
-			//cameraToWorld.multVecMatrix(Vec3f(0), origin);  
-			glm_vec4 origin = { 0, 0, 20 };
-
-			int rayId = 0;
-			for (size_t j = 0; j < height; j++)
-			{
-				for (size_t i = 0; i < width; i++)
-				{
-					float x = (2 * (i + 0.5) / (float)width - 1) * aspectRatio * fovScale;
-					float y = (1 - 2 * (j + 0.5) / (float)height) * fovScale;
-					glm::vec3 dir = { x,y,-1 };
-					//cameraToWorld.multDirMatrix(Vec3f(x, y, -1), dir);
-					dir = glm::normalize(dir);
-
-					rays[rayId].origin = origin;
-					rays[rayId].dirAndId = { dir.x, dir.y, dir.z, (float)rayId };
-					rayId++;
-				}
-			}
-		}
-#endif
-
-		//Copy data to OpenGL
-		GLuint ssbo = 0;
-		glGenBuffers(1, &ssbo);
-		glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo);
-		glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(Ray) * width * height, rays, GL_DYNAMIC_COPY);
-
-		//Associate buffer index with binding point
-		GLuint ssbo_binding_point_index = 2;
-		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, ssbo_binding_point_index, ssbo);
-
-		//glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
-
-		//GLvoid* p = glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_WRITE_ONLY);
-		//memcpy(p, rays, sizeof(sizeof(Ray) * width * height));
-		//glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
-
-		//Get Shader Storage index from program
-		GLuint block_index = 0;
-		block_index = glGetProgramResourceIndex(ray_program, GL_SHADER_STORAGE_BLOCK, "rBuffer");
-		if (block_index == GL_INVALID_INDEX)
-			rvDebug.Log("rBuffer Storage Block couldn't be found on program with id " + to_string(ray_program));
-		rvDebug.Log("rBuffer Storage Block found at index " + to_string(block_index));
-
-
-		glShaderStorageBlockBinding(ray_program, block_index, ssbo_binding_point_index);
-		rvDebug.Log("rBuffer Storage Block binding is " + to_string(ssbo_binding_point_index));
-	}
-#pragma endregion
-
-#pragma region Passing Primitives Buffer to Shader
-	{
-		//Generate Primitives Information
-		Sphere spheres[] = {
-			//POS x		y	 z	  scale		COL r	g	b	coef	SPEC pow	coef
-			{ 13,	6,	-14,	1,		1,	0,	0,	0.8,		 50,	0.6 },
-			{ -13,	-10,-20,	3,	0,	0.8,0,	0.8,		 50,	0.6 },
-			{ -5,	2,	-10,	1,		1,	0,	0.7,0.8,		 50,	0.6 },
-			{ 0,	0,	-15,	2,		0.7,0.3,0,	0.8,		 50,	0.6 },
-			{ 7,	0,	-10,	1,		1,	0,	1,	0.8,		 50,	0.6 },
-			{ 10,	-3,	-5,		1,		0,	1,	1,	0.8,		 50,	0.6 },
-			{ 11,	-3,	-8,		1,		1,	0,	0,	0.8,		 50,	0.6 },
-			{ 13,	6,	-10,	3,	1,	1,	0,	0.8,		 50,	0.6 },
-		};
-
-		//Copy data to OpenGL
-		GLuint ssbo = 0;
-		glGenBuffers(1, &ssbo);
-		glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo);
-		glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(spheres), spheres, GL_DYNAMIC_COPY);
-
-		//Associate buffer index with binding point
-		GLuint ssbo_binding_point_index = 3;
-		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, ssbo_binding_point_index, ssbo);
-
-		//glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
-
-		//GLvoid* p = glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_WRITE_ONLY);
-		//memcpy(p, rays, sizeof(sizeof(Ray) * width * height));
-		//glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
-
-		//Get Shader Storage index from program
-		GLuint block_index = 0;
-		block_index = glGetProgramResourceIndex(ray_program, GL_SHADER_STORAGE_BLOCK, "sBuffer");
-		if (block_index == GL_INVALID_INDEX)
-			rvDebug.Log("sBuffer Storage Block couldn't be found on program with id " + to_string(ray_program));
-		rvDebug.Log("sBuffer Storage Block found at index " + to_string(block_index));
-
-
-		glShaderStorageBlockBinding(ray_program, block_index, ssbo_binding_point_index);
-		rvDebug.Log("sBuffer Storage Block binding is " + to_string(ssbo_binding_point_index));
-	}
-#pragma endregion
-
-	//FUUUN
-	GLint timeLoc = glGetUniformLocation(ray_program, "time");
-
 	while (!glfwWindowShouldClose(window))
 	{
 		_update_fps_counter(window);
 
-		//Lunch Compute Shader!
-		glUseProgram(ray_program);
+		//===============COMPUT RAYTRACING HERE====================
+		GLint raytracePreview = RayTracer::Compute();
+		//===============COMPUT RAYTRACING HERE====================
 
-		//Update time variable
-		glUniform1f(timeLoc, glfwGetTime());
-		glDispatchCompute((GLuint)width, (GLuint)height, 1);
-
-		// make sure writing to image has finished before read
-		glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+#pragma region Draw Raytracer Output
 
 		//Clear back color and depth buffer
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -440,13 +217,15 @@ int App::Run()
 
 		//Texture binding
 		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, texture);
+		glBindTexture(GL_TEXTURE_2D, raytracePreview);
 
 		//Bind VAO
 		vao.Bind();
 
 		//Draw given VBO
 		vbo.Draw();
+
+#pragma endregion
 
 		//Swap front and back buffers
 		glfwSwapBuffers(window);
@@ -459,6 +238,7 @@ int App::Run()
 			glfwSetWindowShouldClose(window, 1);
 		}
 
+		//system("pause");
 	}
 
 	//Return Sucessfully Exit

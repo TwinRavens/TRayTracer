@@ -14,6 +14,10 @@ UpgradeLog.htm
 *.ilk
 *.tmp
 *.sdf
+*.csv
+*.vspx
+*.nvuser
+*.psess
 
 #folders
 .vs/

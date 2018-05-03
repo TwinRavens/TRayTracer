@@ -22,6 +22,7 @@
 
 //Raytracer Includes
 #include "Ray.h"
+#include "gRayTracer.h"
 #include "Primitives.h"
 
 //Typedefs
@@ -67,7 +68,7 @@ namespace rav
 		static App& getApp();
 
 		//Initialization function
-		int Initialize(cint &width = 1360, cint &height = 768, str name = "Default Window", bool fullscreen = true);
+		int Initialize(cint &width = 1360, cint &height = 768, str name = "Default Window", bool fullscreen = true, bool vsync = false);
 
 		//While function (Run to get into loop)
 		int Run();

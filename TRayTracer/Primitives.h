@@ -3,9 +3,5 @@
 
 struct Sphere
 {
-	glm_vec4 posAndScale;	 
-	glm_vec4 diffColAndCoef; 
-	glm_vec4 specPowAndCoef; //And Two padding floats
+	glm_vec4 posAndScale;
 };
-
-typedef Sphere UniformCube;

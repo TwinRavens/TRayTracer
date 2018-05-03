@@ -1,0 +1,139 @@
+#version 430
+
+layout(local_size_x = 256, local_size_y = 1, local_size_z = 1) in;
+layout(rgba32f, binding = 0) uniform image2D img_output;
+
+layout(location=0) uniform float time;
+layout(location=1) uniform int depthLevel;
+layout(location=2) uniform int workGroupWidth;
+layout(location=3) uniform int screenArea;
+layout(location=4) uniform vec4 ambientColour;
+
+struct Ray
+{
+	vec4 origAndWght;
+	vec4 dir;
+	ivec4 pixelCoords; //And two padding
+};
+
+layout (std140) buffer rBuffer
+{
+  Ray rays[];
+};
+
+struct RayHit
+{
+	vec4 hitAndWeight;
+	vec4 normal;
+	vec4 viewDir;
+	ivec4 pixelCoordsObjIdType;
+};
+
+layout (std140) buffer rHitBuffer
+{
+	RayHit hits[];
+};
+
+struct Material
+{
+	vec4 diffColAlpha;
+	vec4 specDiffAmbiCoefShinness;
+	vec4 refrIndexReflCoef; //And two padding
+};
+
+layout (std140) buffer sMatBuffer
+{
+	Material materials[];
+};
+
+//define light
+vec3 lightPos = vec3(0.0, 0.0, 0.0);
+vec4 lightColor = vec4(1.0, 1.0, 1.0, 1.0);
+
+//===========AUXILIAR=FUNCTIONS===========//
+//These are implemented in hardware, that's why they use vec4s
+//Could stack 4 values at a time for comparisong
+
+//Returns 0 when x equals y and 1 when not
+float when_neq(float x, float y) {
+  return abs(sign(x - y));
+}
+
+vec4 shade(vec3 point, vec3 normal, vec3 viewDir, int objId) {
+
+		//ambient
+		float ka = materials[objId].specDiffAmbiCoefShinness.z;  //coeficient of ambient light
+		vec4 ia = ambientColour * ka;
+
+		//diffuse
+		float kd = materials[objId].specDiffAmbiCoefShinness.y; // coeficient of diffuse light
+		vec4 diffuseColor = vec4(materials[objId].diffColAlpha.rgb, 1); // color from the object
+
+		vec3 lightDir = normalize(lightPos - point);
+		float diffuse = clamp(dot(lightDir, normal), 0, 1);
+		vec4 id = kd * diffuse * diffuseColor * lightColor;
+
+		//specular TODO: review this
+		float ks = materials[objId].specDiffAmbiCoefShinness.x;
+		float specullarPower = materials[objId].specDiffAmbiCoefShinness.w;
+
+		//Reflect = lightDir - 2 * normal * dot(normal, lightDir)
+		//Ou normalize(2 * normal * dot(normal, lightDir) - lightDir) quando o raio vem da fonte de luz
+		vec3 reflection = normalize(lightDir - 2 * normal * diffuse);
+		float specular = clamp(abs(pow(dot(reflection, viewDir), specullarPower)), 0, 1);
+		
+		vec4 is = ks * specular * lightColor;
+
+		return (ia + id + is);
+}
+
+void main() {
+	// base pixel colour for image
+	vec4 pixel = const vec4(0);
+
+	//Get working ray id
+	const int hitId = int(gl_GlobalInvocationID.x);
+
+	//Get texture pixel coords from hit
+	const ivec2 pixelCoords = hits[hitId].pixelCoordsObjIdType.xy;
+
+	//Get object id from hit
+	const int objId = hits[hitId].pixelCoordsObjIdType.z;
+
+	const float rayContribution = hits[hitId].hitAndWeight.w;
+
+	if (objId != -1) //TODO: OPTIMIZE THIS!
+	{
+		vec3 hitPos = hits[hitId].hitAndWeight.xyz;
+		vec3 hitNor = hits[hitId].normal.xyz;
+		vec3 viewDir = hits[hitId].viewDir.xyz;
+		
+		//Do proper shading
+		pixel = mix(vec4(0), shade(hitPos, hitNor, viewDir, objId), materials[objId].diffColAlpha.a);
+		
+		//Reflection
+		vec3 reflectedRayDir = reflect(viewDir, hitNor);
+		float reflectContribution = rayContribution * materials[objId].refrIndexReflCoef.y;
+		
+		rays[hitId*2+0] = Ray(vec4(hitPos, reflectContribution), vec4(reflectedRayDir, 0), pixelCoords.xyxy);
+
+		//Refraction
+		vec3 refractRayDir = refract(viewDir, hitNor, materials[objId].refrIndexReflCoef.x);
+		float refractContribution = rayContribution * (1.0 - materials[objId].diffColAlpha.w);
+
+		rays[hitId*2+1] = Ray(vec4(hitPos, refractContribution), vec4(refractRayDir, 0), pixelCoords.xyxy);
+	}
+	else
+	{
+		rays[hitId*2+0] = Ray(vec4(0), vec4(0), pixelCoords.xyxy);
+		rays[hitId*2+1] = Ray(vec4(0), vec4(0), pixelCoords.xyxy);
+	}
+
+	//Get last pass pixel (only if this is not the first pass)
+	vec4 lastPixel = imageLoad(img_output, pixelCoords) * step(1, depthLevel);
+
+	//Calculate final pass pixel
+	vec4 outPixel = lastPixel + pixel * rayContribution;
+
+	imageStore(img_output, pixelCoords, outPixel);
+}

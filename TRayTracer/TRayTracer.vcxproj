@@ -36,6 +36,7 @@
     <PlatformToolset>v141</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>MultiByte</CharacterSet>
+    <UseOfMfc>false</UseOfMfc>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
@@ -49,6 +50,7 @@
     <PlatformToolset>v141</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>MultiByte</CharacterSet>
+    <UseOfMfc>false</UseOfMfc>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
@@ -72,25 +74,35 @@
     <TargetName>$(ProjectName)</TargetName>
     <OutDir>.\bin\</OutDir>
     <IntDir>$(Configuration)\</IntDir>
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
+    <ExcludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(MSBuild_ExecutablePath);$(Configuration);$(VC_LibraryPath_x64);</ExcludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <TargetName>$(ProjectName) (x86)</TargetName>
     <OutDir>.\bin\</OutDir>
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
+    <ExcludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(MSBuild_ExecutablePath);$(Configuration);$(VC_LibraryPath_x86);</ExcludePath>
+    <IntDir>$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <IntDir>$(Configuration)\</IntDir>
     <OutDir>.\bin\</OutDir>
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
+    <ExcludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(MSBuild_ExecutablePath);$(Configuration);$(VC_LibraryPath_x64);</ExcludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <OutDir>.\bin\</OutDir>
     <TargetName>$(ProjectName) (x86)</TargetName>
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
+    <ExcludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(MSBuild_ExecutablePath);$(Configuration);$(VC_LibraryPath_x86);</ExcludePath>
+    <IntDir>$(Configuration)\</IntDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>..\include\</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>.\..\include\</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <AdditionalLibraryDirectories>..\lib\x86\</AdditionalLibraryDirectories>
@@ -102,7 +114,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>..\include\</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>.\..\include\</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <AdditionalDependencies>glm_static.lib;glfw3.lib;glew32.lib;opengl32.lib;assimp64.lib;%(AdditionalDependencies)</AdditionalDependencies>
@@ -116,7 +128,8 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>..\include\</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>.\..\include\</AdditionalIncludeDirectories>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
@@ -132,7 +145,8 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>..\include\</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>.\..\include\</AdditionalIncludeDirectories>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
@@ -144,6 +158,7 @@
   <ItemGroup>
     <ClCompile Include="App.cpp" />
     <ClCompile Include="Debug.cpp" />
+    <ClCompile Include="gRayTracer.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Mesh.cpp" />
     <ClCompile Include="gShader.cpp" />
@@ -157,6 +172,8 @@
     <ClInclude Include="App.h" />
     <ClInclude Include="Common.h" />
     <ClInclude Include="Debug.h" />
+    <ClInclude Include="gRayTracer.h" />
+    <ClInclude Include="Material.h" />
     <ClInclude Include="Math.h" />
     <ClInclude Include="Mesh.h" />
     <ClInclude Include="gShader.h" />
@@ -172,6 +189,13 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="bin\data\compute_shader.comp">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="bin\data\collisionPass.comp">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="bin\data\fragment_base.fs" />
+    <None Include="bin\data\shadingPass.comp">
       <FileType>Document</FileType>
     </None>
   </ItemGroup>
