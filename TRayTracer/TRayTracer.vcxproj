@@ -188,16 +188,18 @@
     <ClInclude Include="stb_image.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="bin\data\blurPass.frag" />
     <None Include="bin\data\compute_shader.comp">
       <FileType>Document</FileType>
     </None>
     <None Include="bin\data\collisionPass.comp">
       <FileType>Document</FileType>
     </None>
-    <None Include="bin\data\fragment_base.fs" />
+    <None Include="bin\data\fragment_base.frag" />
     <None Include="bin\data\shadingPass.comp">
       <FileType>Document</FileType>
     </None>
+    <None Include="bin\data\vertex_uv.vert" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

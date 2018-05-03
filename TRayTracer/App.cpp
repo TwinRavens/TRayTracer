@@ -103,7 +103,7 @@ int App::Initialize(cint &width, cint &height, str name, bool fullscreen, bool v
 	glClearColor(0.0f, 0.4509803921568627f, 0.8980392156862745f, 1.0f);
 
 	//Initialize Raytracer
-	RayTracer::Setup(width, height, 2);
+	RayTracer::Setup(width, height, 3);
 
 	//Return no error message
 	return 0;
@@ -113,10 +113,10 @@ int App::Run()
 {
 #pragma region Default Shaders
 	char* vertex_shader;
-	rvLoadFile("./data/vertex_uv.vs", vertex_shader, true);
+	rvLoadFile("./data/vertex_uv.vert", vertex_shader, true);
 
 	char* fragment_shader;
-	rvLoadFile("./data/fragment_base.fs", fragment_shader, true);
+	rvLoadFile("./data/fragment_base.frag", fragment_shader, true);
 
 	GLuint vs = rvCreateShader("vertex_uv_vs", vertex_shader, RV_VERTEX_SHADER);
 

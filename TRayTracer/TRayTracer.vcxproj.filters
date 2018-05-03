@@ -112,7 +112,13 @@
     <None Include="bin\data\shadingPass.comp">
       <Filter>Resource Files</Filter>
     </None>
-    <None Include="bin\data\fragment_base.fs">
+    <None Include="bin\data\fragment_base.frag">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="bin\data\blurPass.frag">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="bin\data\vertex_uv.vert">
       <Filter>Resource Files</Filter>
     </None>
   </ItemGroup>
