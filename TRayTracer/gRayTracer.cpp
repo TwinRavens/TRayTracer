@@ -310,7 +310,7 @@ GLint rav::RayTracer::collisionPass(int depth_level)
 	//TODO: PASS THIS TO AN OBJECT MANAGER
 	//GLint spheresCountId = glGetUniformLocation(collisionProgram, "spheresCount");
 	GLint spheresCountId = 1;
-	glUniform1i(spheresCountId, 7);
+	glUniform1i(spheresCountId, 8);
 
 	//Update workgroup width variable
 	//GLint groupWidthLoc = glGetUniformLocation(collisionProgram, "workGroupWidth");
@@ -437,14 +437,15 @@ GLint rav::RayTracer::Setup(int width, int height, int depth)
 				{	  0,	0,  -15,	2,	},
 				{	  7,	0,  -10,	1,	},
 				{	 10,   -3,	 -5,	1,	},
-				{	 11,   -3,	 -8,	1	}
+				{	 11,   -3,	 -8,	1	},
+				{	 -7,	4,   -6,	1	}
 			};
 
 			//Copy data to OpenGL
 			GLuint ssbo = 0;
 			glGenBuffers(1, &ssbo);
 			glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo);
-			glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(spheres), spheres, GL_STATIC_DRAW);
+			glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(spheres), spheres, GL_DYNAMIC_DRAW);
 
 #pragma region Collision Pass Mapping
 			{
@@ -483,7 +484,8 @@ GLint rav::RayTracer::Setup(int width, int height, int depth)
 				{	0.7,	0.3,	0,		1.0,	0.6,	0.8,	0.1,			50,			1.0,			0.0,	},
 				{	1,		0,		1,		1.0,	0.6,	0.8,	0.1,			50,			1.0,			0.6,	},
 				{	0,		1,		1,		0.6,	0.9,	0.8,	0.1,			50,			1.05,			0.0,	},
-				{	1,		1,		0,		1.0,	0.6,	0.8,	0.1,			50,			1.0,			0.0,	}
+				{	1,		1,		0,		1.0,	0.6,	0.8,	0.1,			50,			1.0,			0.0,	},
+				{	1,		1,		1,		1.0,	0.6,	0.6,	0.1,			50,			1.0,			1.0,	}
 			};
 
 			//Copy data to OpenGL
