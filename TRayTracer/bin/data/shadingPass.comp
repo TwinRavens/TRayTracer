@@ -1,6 +1,6 @@
 #version 430
 
-layout(local_size_x = 256, local_size_y = 1, local_size_z = 1) in;
+layout(local_size_x = 32, local_size_y = 1, local_size_z = 1) in;
 layout(rgba32f, binding = 0) uniform image2D img_output;
 
 layout(location=0) uniform float time;
@@ -25,7 +25,7 @@ struct RayHit
 {
 	vec4 hitAndWeight;
 	vec4 normal;
-	vec4 viewDir;
+	vec4 rayDir;
 	ivec4 pixelCoordsObjIdType;
 };
 
@@ -59,7 +59,7 @@ float when_neq(float x, float y) {
   return abs(sign(x - y));
 }
 
-vec4 shade(vec3 point, vec3 normal, vec3 viewDir, int objId) {
+vec4 shade(vec3 point, vec3 normal, vec3 rayDir, int objId) {
 
 		//ambient
 		float ka = materials[objId].specDiffAmbiCoefShinness.z;  //coeficient of ambient light
@@ -80,7 +80,7 @@ vec4 shade(vec3 point, vec3 normal, vec3 viewDir, int objId) {
 		//Reflect = lightDir - 2 * normal * dot(normal, lightDir)
 		//Ou normalize(2 * normal * dot(normal, lightDir) - lightDir) quando o raio vem da fonte de luz
 		vec3 reflection = normalize(lightDir - 2 * normal * diffuse);
-		float specular = clamp(abs(pow(dot(reflection, viewDir), specullarPower)), 0, 1);
+		float specular = clamp(abs(pow(dot(reflection, rayDir), specullarPower)), 0, 1);
 		
 		vec4 is = ks * specular * lightColor;
 
@@ -106,19 +106,19 @@ void main() {
 	{
 		vec3 hitPos = hits[hitId].hitAndWeight.xyz;
 		vec3 hitNor = hits[hitId].normal.xyz;
-		vec3 viewDir = hits[hitId].viewDir.xyz;
+		vec3 rayDir = hits[hitId].rayDir.xyz;
 		
 		//Do proper shading
-		pixel = mix(vec4(0), shade(hitPos, hitNor, viewDir, objId), materials[objId].diffColAlpha.a);
+		pixel = mix(vec4(0), shade(hitPos, hitNor, rayDir, objId), materials[objId].diffColAlpha.a);
 		
 		//Reflection
-		vec3 reflectedRayDir = reflect(viewDir, hitNor);
+		vec3 reflectedRayDir = reflect(rayDir, hitNor);
 		float reflectContribution = rayContribution * materials[objId].refrIndexReflCoef.y;
 		
 		rays[hitId*2+0] = Ray(vec4(hitPos, reflectContribution), vec4(reflectedRayDir, 0), pixelCoords.xyxy);
 
 		//Refraction
-		vec3 refractRayDir = refract(viewDir, hitNor, materials[objId].refrIndexReflCoef.x);
+		vec3 refractRayDir = refract(rayDir, hitNor, materials[objId].refrIndexReflCoef.x);
 		float refractContribution = rayContribution * (1.0 - materials[objId].diffColAlpha.w);
 
 		rays[hitId*2+1] = Ray(vec4(hitPos, refractContribution), vec4(refractRayDir, 0), pixelCoords.xyxy);

@@ -52,7 +52,7 @@ namespace rav
 
 	public:
 		//Set up screen buffers, load shaders
-		static GLint Setup(int screen_width, int screen_height, int depth_level = 4);
+		static GLint Setup(int screen_width, int screen_height, int depth_level = 2);
 
 		//Renders a full image with given trace depth
 		static GLint Compute();

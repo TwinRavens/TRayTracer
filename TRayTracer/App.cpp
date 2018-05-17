@@ -103,7 +103,7 @@ int App::Initialize(cint &width, cint &height, str name, bool fullscreen, bool v
 	glClearColor(0.0f, 0.4509803921568627f, 0.8980392156862745f, 1.0f);
 
 	//Initialize Raytracer
-	RayTracer::Setup(width, height, 3);
+	RayTracer::Setup(width, height, 2);
 
 	//Return no error message
 	return 0;
@@ -116,17 +116,17 @@ int App::Run()
 	rvLoadFile("./data/vertex_uv.vert", vertex_shader, true);
 
 	char* fragment_shader;
-	rvLoadFile("./data/fragment_base.frag", fragment_shader, true);
+	rvLoadFile("./data/blurPass.frag", fragment_shader, true);
 
 	GLuint vs = rvCreateShader("vertex_uv_vs", vertex_shader, RV_VERTEX_SHADER);
 
 	GLuint fs = rvCreateShader("fragment_base_vs", fragment_shader, RV_FRAGMENT_SHADER);
 
 	//Create program
-	defaultPrg = rvCreateProgram("screen_pr", vs, fs);				//Create program with two shaders attached
+	defaultPrg = rvCreateProgram("screen_pr", vs, fs);			//Create program with two shaders attached
 	//rvSetAttributeLoc(pr, "vertex_position", 0);				//Set attribute location (before linking!)
 	//rvSetAttributeLoc(pr, "vertex_coords", 1);				//Set attribute location (before linking!)
-	rvLinkProgram(defaultPrg);											//Link program
+	rvLinkProgram(defaultPrg);									//Link program
 
 #pragma endregion
 	CreateScreenQuad();

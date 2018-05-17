@@ -4,8 +4,8 @@ layout(local_size_x = 256, local_size_y = 1, local_size_z = 1) in;
 
 layout(location=0) uniform float time;
 layout(location=1) uniform int spheresCount;
-layout(location=2) uniform int workGroupWidth = 1920;
-layout(location=3) uniform int workGroupHeight = 1080;
+layout(location=2) uniform int workGroupWidth;
+layout(location=3) uniform int workGroupHeight;
 layout(location=4) uniform int depthLevel;
 
 struct Ray
@@ -24,7 +24,7 @@ struct RayHit
 {
 	vec4 hitAndWeight;
 	vec4 normal;
-	vec4 viewDir;
+	vec4 rayDir;
 	ivec4 pixelCoordsObjIdType;
 };
 
