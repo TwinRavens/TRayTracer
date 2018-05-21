@@ -8,10 +8,12 @@ private:
 	//rect
 	GLuint program;
 	GLuint outputBuffer;
+	GLuint FBO;
 	rav::VertexArray* screenQuadVAO = nullptr;
 	rav::VertexBuffer* screenQuadVBO = nullptr;
 	void SetupProgram(GLuint vertexShader, GLuint fragmentShader);
 	void CreateOutputBuffer(int width, int height);
+	void CreateFBO();
 public:
 	PostProcess(GLuint vertexShader, GLuint fragmentShader, GLuint outputBuffer);
 	PostProcess(GLuint vertexShader, GLuint fragmentShader, int width, int height);

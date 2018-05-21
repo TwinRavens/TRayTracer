@@ -21,6 +21,24 @@ void PostProcess::CreateOutputBuffer(int width, int height)
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);	//Repeat out of bounds UVs
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);		//Set Image sampling filtering
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);		//Set Image sampling filtering
+
+}
+
+void PostProcess::CreateFBO()
+{
+	glGenFramebuffers(1, &FBO);
+
+	glBindFramebuffer(GL_FRAMEBUFFER, FBO);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, outputBuffer, 0);
+
+	//Check whether or not FrameBuffer is okay with GPU capabilities
+	GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+	if (status != GL_FRAMEBUFFER_COMPLETE)
+	{
+		rvDebug.Log("Framebuffer error Status: " + std::to_string(status), rav::Debug::Error);
+	}
+
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
 #pragma region Constructors
@@ -28,24 +46,31 @@ PostProcess::PostProcess(GLuint vertexShader, GLuint fragmentShader, GLuint outp
 {
 	SetupProgram(vertexShader, fragmentShader);
 	this->outputBuffer = outputBuffer;
+	CreateFBO();
 }
 
 PostProcess::PostProcess(GLuint vertexShader, GLuint fragmentShader, int width, int height)
 {
 	SetupProgram(vertexShader, fragmentShader);
 	CreateOutputBuffer(width, height);
+	CreateFBO();
+
 }
 
 PostProcess::PostProcess(GLuint programID, int width, int height)
 {
 	this->program = programID;
 	CreateOutputBuffer(width, height);
+	CreateFBO();
+
 }
 
 PostProcess::PostProcess(GLuint programID, GLuint outputBuffer)
 {
 	this->program = programID;
 	this->outputBuffer = outputBuffer;
+	CreateFBO();
+
 }
 
 #pragma endregion
@@ -54,13 +79,14 @@ PostProcess::~PostProcess()
 {
 }
 
-
 GLuint PostProcess::Process(GLuint input)
 {
 	if (screenQuadVAO == nullptr) {
 
 		return -1;
 	}
+	glBindFramebuffer(GL_FRAMEBUFFER, FBO);
+
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	rvUseProgram(this->program);
@@ -73,6 +99,9 @@ GLuint PostProcess::Process(GLuint input)
 
 	//Draw given VBO
 	screenQuadVBO->Draw();
+
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
 
 	return this->outputBuffer;
 }
