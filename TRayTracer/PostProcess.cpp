@@ -7,6 +7,8 @@ void PostProcess::SetupProgram(GLuint vertexShader, GLuint fragmentShader)
 {
 	program = rvCreateProgram("post_process_v" + std::to_string(vertexShader) + "_f" + std::to_string(fragmentShader),
 		vertexShader, fragmentShader);
+	rvLinkProgram(program);
+
 }
 
 void PostProcess::CreateOutputBuffer(int width, int height)
@@ -83,6 +85,7 @@ GLuint PostProcess::Process(GLuint input)
 {
 	if (screenQuadVAO == nullptr) {
 
+		rvDebug.Log("ScreenQuad of Post Process not set", rav::Debug::Error);
 		return -1;
 	}
 	glBindFramebuffer(GL_FRAMEBUFFER, FBO);

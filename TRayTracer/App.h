@@ -24,6 +24,7 @@
 #include "Ray.h"
 #include "gRayTracer.h"
 #include "Primitives.h"
+#include "PostProcess.h" 
 
 //Typedefs
 typedef const int cint;
@@ -42,14 +43,16 @@ namespace rav
 		//Private constructor and destructors for Singleton
 		App();
 		~App();
-		
+
 		//GLFW Window
 		GLFWwindow* window;
 		VertexArray* screenQuadVAO;
 		VertexBuffer* screenQuadVBO;
 		GLuint defaultPrg;
+		PostProcess *postProcess;
 
 		void CreateScreenQuad();
+		void CreatePostProcess();
 	public:
 		//GLFW error callback
 		static void error_callback(int error, const char* description)

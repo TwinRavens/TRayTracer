@@ -103,7 +103,7 @@ int App::Initialize(cint &width, cint &height, str name, bool fullscreen, bool v
 	glClearColor(0.0f, 0.4509803921568627f, 0.8980392156862745f, 1.0f);
 
 	//Initialize Raytracer
-	RayTracer::Setup(width, height, 2);
+	RayTracer::Setup(width, height, 3);
 
 	//Return no error message
 	return 0;
@@ -116,7 +116,7 @@ int App::Run()
 	rvLoadFile("./data/vertex_uv.vert", vertex_shader, true);
 
 	char* fragment_shader;
-	rvLoadFile("./data/blurPass.frag", fragment_shader, true);
+	rvLoadFile("./data/fragment_base.frag", fragment_shader, true);
 
 	GLuint vs = rvCreateShader("vertex_uv_vs", vertex_shader, RV_VERTEX_SHADER);
 
@@ -130,6 +130,7 @@ int App::Run()
 
 #pragma endregion
 	CreateScreenQuad();
+	CreatePostProcess();
 
 	////Load texture with STB Image
 	//int width, height, nrChannels;
@@ -153,6 +154,10 @@ int App::Run()
 		GLint raytracePreview = RayTracer::Compute();
 		//===============COMPUT RAYTRACING HERE====================
 
+#pragma region Test Post Process
+		GLuint idPostProcess = postProcess->Process(raytracePreview);
+#pragma endregion
+
 #pragma region Draw Raytracer Output
 
 		//Clear back color and depth buffer
@@ -163,7 +168,7 @@ int App::Run()
 
 		//Texture binding
 		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, raytracePreview);
+		glBindTexture(GL_TEXTURE_2D, idPostProcess);
 
 		//Bind VAO
 		screenQuadVAO->Bind();
@@ -184,7 +189,6 @@ int App::Run()
 			glfwSetWindowShouldClose(window, 1);
 		}
 
-		//system("pause");
 	}
 
 	//Return Sucessfully Exit
@@ -253,5 +257,18 @@ void App::CreateScreenQuad() {
 	//Use VBO for setting data pointers
 	screenQuadVBO->SetAttributePointers();
 
+}
+
+inline void rav::App::CreatePostProcess()
+{
+	GLuint vs = rvGetShader("vertex_uv_vs");
+	char* blur_file;
+	rvLoadFile("./data/blurPass.frag", blur_file, true);
+	GLuint blurShader = rvCreateShader("fragment_blur", blur_file, RV_FRAGMENT_SHADER);
+
+	int width, height;
+	glfwGetWindowSize(window, &width, &height);
+	postProcess = new PostProcess(vs, blurShader, width, height);
+	postProcess->CreateScreenQuad();
 }
 
