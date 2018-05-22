@@ -51,6 +51,7 @@ namespace rav
 		GLuint defaultPrg;
 		PostProcess *postProcess;
 
+		void CreateDefaultProgram();
 		void CreateScreenQuad();
 		void CreatePostProcess();
 	public:

@@ -82,7 +82,7 @@ PostProcess::PostProcess(GLuint programID, GLuint outputBuffer)
 
 PostProcess::~PostProcess()
 {
-	screenQuadVBO->Free();
+
 }
 
 GLuint PostProcess::Process(GLuint input)

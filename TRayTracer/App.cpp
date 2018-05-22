@@ -111,24 +111,7 @@ int App::Initialize(cint &width, cint &height, str name, bool fullscreen, bool v
 
 int App::Run()
 {
-#pragma region Default Shaders
-	char* vertex_shader;
-	rvLoadFile("./data/vertex_uv.vert", vertex_shader, true);
-
-	char* fragment_shader;
-	rvLoadFile("./data/fragment_base.frag", fragment_shader, true);
-
-	GLuint vs = rvCreateShader("vertex_uv_vs", vertex_shader, RV_VERTEX_SHADER);
-
-	GLuint fs = rvCreateShader("fragment_base_vs", fragment_shader, RV_FRAGMENT_SHADER);
-
-	//Create program
-	defaultPrg = rvCreateProgram("screen_pr", vs, fs);			//Create program with two shaders attached
-	//rvSetAttributeLoc(pr, "vertex_position", 0);				//Set attribute location (before linking!)
-	//rvSetAttributeLoc(pr, "vertex_coords", 1);				//Set attribute location (before linking!)
-	rvLinkProgram(defaultPrg);									//Link program
-
-#pragma endregion
+	CreateDefaultProgram();
 	CreateScreenQuad();
 	CreatePostProcess();
 
@@ -201,6 +184,26 @@ int App::End()
 }
 
 
+void rav::App::CreateDefaultProgram()
+{
+	char* vertex_shader;
+	rvLoadFile("./data/vertex_uv.vert", vertex_shader, true);
+
+	char* fragment_shader;
+	rvLoadFile("./data/fragment_base.frag", fragment_shader, true);
+
+	GLuint vs = rvCreateShader("vertex_uv_vs", vertex_shader, RV_VERTEX_SHADER);
+
+	GLuint fs = rvCreateShader("fragment_base_vs", fragment_shader, RV_FRAGMENT_SHADER);
+
+	//Create program
+	defaultPrg = rvCreateProgram("screen_pr", vs, fs);			//Create program with two shaders attached
+																//rvSetAttributeLoc(pr, "vertex_position", 0);				//Set attribute location (before linking!)
+																//rvSetAttributeLoc(pr, "vertex_coords", 1);				//Set attribute location (before linking!)
+	rvLinkProgram(defaultPrg);									//Link program
+
+}
+
 void App::CreateScreenQuad() {
 
 	screenQuadVBO = new VertexBuffer();
@@ -262,15 +265,16 @@ void App::CreateScreenQuad() {
 inline void rav::App::CreatePostProcess()
 {
 	GLuint default_vs = rvGetShader("vertex_uv_vs");
-	GLuint default_fs = rvGetShader("vertex_uv_vs");
+	GLuint default_fs = rvGetShader("fragment_base_vs");
+	int width, height;
+	glfwGetWindowSize(window, &width, &height);
+
 	char* blur_file;
 	rvLoadFile("./data/blurPass.frag", blur_file, true);
 	GLuint blur_fs = rvCreateShader("fragment_blur", blur_file, RV_FRAGMENT_SHADER);
 
-	int width, height;
-	glfwGetWindowSize(window, &width, &height);
 	postProcess = new PostProcess(default_vs, blur_fs, width, height);
-	postProcess->CreateScreenQuad();
+	postProcess->setScreenQuad(screenQuadVAO, screenQuadVBO);
 
 	postProcess = new PostProcessDecorator(postProcess, default_vs, blur_fs, width, height);
 
