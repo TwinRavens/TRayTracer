@@ -24,7 +24,7 @@
 #include "Ray.h"
 #include "gRayTracer.h"
 #include "Primitives.h"
-#include "PostProcess.h" 
+#include "PostProcessDecorator.h" 
 
 //Typedefs
 typedef const int cint;

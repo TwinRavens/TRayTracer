@@ -57,6 +57,9 @@
     <ClCompile Include="PostProcess.cpp">
       <Filter>Source Files\PostProcess</Filter>
     </ClCompile>
+    <ClCompile Include="PostProcessDecorator.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="App.h">
@@ -112,6 +115,9 @@
     </ClInclude>
     <ClInclude Include="PostProcess.h">
       <Filter>Header Files\PostProcess</Filter>
+    </ClInclude>
+    <ClInclude Include="PostProcessDecorator.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

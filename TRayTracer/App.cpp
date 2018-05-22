@@ -154,7 +154,7 @@ int App::Run()
 		GLint raytracePreview = RayTracer::Compute();
 		//===============COMPUT RAYTRACING HERE====================
 
-#pragma region Test Post Process
+#pragma region PostProcess
 		GLuint idPostProcess = postProcess->Process(raytracePreview);
 #pragma endregion
 
@@ -261,14 +261,19 @@ void App::CreateScreenQuad() {
 
 inline void rav::App::CreatePostProcess()
 {
-	GLuint vs = rvGetShader("vertex_uv_vs");
+	GLuint default_vs = rvGetShader("vertex_uv_vs");
+	GLuint default_fs = rvGetShader("vertex_uv_vs");
 	char* blur_file;
 	rvLoadFile("./data/blurPass.frag", blur_file, true);
-	GLuint blurShader = rvCreateShader("fragment_blur", blur_file, RV_FRAGMENT_SHADER);
+	GLuint blur_fs = rvCreateShader("fragment_blur", blur_file, RV_FRAGMENT_SHADER);
 
 	int width, height;
 	glfwGetWindowSize(window, &width, &height);
-	postProcess = new PostProcess(vs, blurShader, width, height);
+	postProcess = new PostProcess(default_vs, blur_fs, width, height);
 	postProcess->CreateScreenQuad();
+
+	postProcess = new PostProcessDecorator(postProcess, default_vs, blur_fs, width, height);
+
+
 }
 

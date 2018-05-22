@@ -4,7 +4,7 @@
 
 class PostProcess
 {
-private:
+protected:
 	//rect
 	GLuint program;
 	GLuint outputBuffer;
@@ -23,7 +23,8 @@ public:
 
 	virtual GLuint Process(GLuint input);
 
-	void setScreenQuad(rav::VertexArray* screenQuadVAO, rav::VertexBuffer* screenQuadVBO);
 	void CreateScreenQuad();
+	void setScreenQuad(rav::VertexArray* screenQuadVAO, rav::VertexBuffer* screenQuadVBO);
+	void getScreenQuad(rav::VertexArray** screenQuadVAO, rav::VertexBuffer** screenQuadVBO);
 };
 

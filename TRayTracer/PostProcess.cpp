@@ -5,9 +5,12 @@
 
 void PostProcess::SetupProgram(GLuint vertexShader, GLuint fragmentShader)
 {
-	program = rvCreateProgram("post_process_v" + std::to_string(vertexShader) + "_f" + std::to_string(fragmentShader),
-		vertexShader, fragmentShader);
-	rvLinkProgram(program);
+	string s = "post_process_v" + std::to_string(vertexShader) + "_f" + std::to_string(fragmentShader);
+	program = rvGetProgram(s);
+	if (program == 0) {
+		program = rvCreateProgram(s, vertexShader, fragmentShader);
+		rvLinkProgram(program);
+	}
 
 }
 
@@ -79,6 +82,7 @@ PostProcess::PostProcess(GLuint programID, GLuint outputBuffer)
 
 PostProcess::~PostProcess()
 {
+	screenQuadVBO->Free();
 }
 
 GLuint PostProcess::Process(GLuint input)
@@ -109,11 +113,6 @@ GLuint PostProcess::Process(GLuint input)
 	return this->outputBuffer;
 }
 
-void PostProcess::setScreenQuad(rav::VertexArray * screenQuadVAO, rav::VertexBuffer * screenQuadVBO)
-{
-	this->screenQuadVAO = screenQuadVAO;
-	this->screenQuadVBO = screenQuadVBO;
-}
 
 void PostProcess::CreateScreenQuad()
 {
@@ -171,6 +170,17 @@ void PostProcess::CreateScreenQuad()
 	//Use VBO for setting data pointers
 	screenQuadVBO->SetAttributePointers();
 
+}
+
+void PostProcess::setScreenQuad(rav::VertexArray * screenQuadVAO, rav::VertexBuffer * screenQuadVBO)
+{
+	this->screenQuadVAO = screenQuadVAO;
+	this->screenQuadVBO = screenQuadVBO;
+}
+void PostProcess::getScreenQuad(rav::VertexArray ** screenQuadVAO, rav::VertexBuffer ** screenQuadVBO)
+{
+	*screenQuadVAO = this->screenQuadVAO;
+	*screenQuadVBO = this->screenQuadVBO;
 }
 
 
