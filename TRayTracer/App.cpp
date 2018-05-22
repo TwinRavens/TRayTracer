@@ -264,18 +264,29 @@ void App::CreateScreenQuad() {
 
 inline void rav::App::CreatePostProcess()
 {
-	GLuint default_vs = rvGetShader("vertex_uv_vs");
-	GLuint default_fs = rvGetShader("fragment_base_vs");
 	int width, height;
 	glfwGetWindowSize(window, &width, &height);
+
+	GLuint default_vs = rvGetShader("vertex_uv_vs");
+	GLuint default_fs = rvGetShader("fragment_base_vs");
 
 	char* blur_file;
 	rvLoadFile("./data/blurPass.frag", blur_file, true);
 	GLuint blur_fs = rvCreateShader("fragment_blur", blur_file, RV_FRAGMENT_SHADER);
 
-	postProcess = new PostProcess(default_vs, blur_fs, width, height);
+	char* sobel_file;
+	rvLoadFile("./data/fragment_sobel.frag", sobel_file, true);
+	GLuint sobel_fs = rvCreateShader("fragment_sobel", sobel_file, RV_FRAGMENT_SHADER);
+
+	char* gray_file;
+	rvLoadFile("./data/fragment_gray.frag", gray_file, true);
+	GLuint gray_fs = rvCreateShader("fragment_gray", gray_file, RV_FRAGMENT_SHADER);
+
+	postProcess = new PostProcess(default_vs, gray_fs, width, height);
 	postProcess->setScreenQuad(screenQuadVAO, screenQuadVBO);
 
+
+	postProcess = new PostProcessDecorator(postProcess, default_vs, sobel_fs, width, height);
 	postProcess = new PostProcessDecorator(postProcess, default_vs, blur_fs, width, height);
 
 

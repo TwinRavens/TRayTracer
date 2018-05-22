@@ -19,6 +19,9 @@
     <Filter Include="Source Files\PostProcess">
       <UniqueIdentifier>{6becb7a2-bb29-462e-b1c7-05b1d2709ba5}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Resource Files\PostProcess">
+      <UniqueIdentifier>{2e8a6f8e-354b-4b91-bfde-82d122ffc018}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -133,11 +136,17 @@
     <None Include="bin\data\fragment_base.frag">
       <Filter>Resource Files</Filter>
     </None>
-    <None Include="bin\data\blurPass.frag">
-      <Filter>Resource Files</Filter>
-    </None>
     <None Include="bin\data\vertex_uv.vert">
       <Filter>Resource Files</Filter>
+    </None>
+    <None Include="bin\data\blurPass.frag">
+      <Filter>Resource Files\PostProcess</Filter>
+    </None>
+    <None Include="bin\data\fragment_gray.frag">
+      <Filter>Resource Files\PostProcess</Filter>
+    </None>
+    <None Include="bin\data\fragment_sobel.frag">
+      <Filter>Resource Files\PostProcess</Filter>
     </None>
   </ItemGroup>
 </Project>
