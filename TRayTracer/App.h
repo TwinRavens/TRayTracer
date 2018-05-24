@@ -49,7 +49,7 @@ namespace rav
 		VertexArray* screenQuadVAO;
 		VertexBuffer* screenQuadVBO;
 		GLuint defaultPrg;
-		PostProcess *postProcess;
+		PostProcess *postProcessPipeline;
 
 		void CreateDefaultProgram();
 		void CreateScreenQuad();

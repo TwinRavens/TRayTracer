@@ -1,8 +1,5 @@
 #include "PostProcess.h"
 
-
-
-
 void PostProcess::SetupProgram(GLuint vertexShader, GLuint fragmentShader)
 {
 	string s = "post_process_v" + std::to_string(vertexShader) + "_f" + std::to_string(fragmentShader);
@@ -75,7 +72,6 @@ PostProcess::PostProcess(GLuint programID, GLuint outputBuffer)
 	this->program = programID;
 	this->outputBuffer = outputBuffer;
 	CreateFBO();
-
 }
 
 #pragma endregion
@@ -92,21 +88,22 @@ GLuint PostProcess::Process(GLuint input)
 		rvDebug.Log("ScreenQuad of Post Process not set", rav::Debug::Error);
 		return -1;
 	}
+
+	//Change input texture
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, input);
+	
 	glBindFramebuffer(GL_FRAMEBUFFER, FBO);
 
+	//clear framebuffer
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	rvUseProgram(this->program);
 
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, input);
-
-	//Bind VAO
 	screenQuadVAO->Bind();
-
-	//Draw given VBO
 	screenQuadVBO->Draw();
 
+	//unbind
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 

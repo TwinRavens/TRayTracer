@@ -138,7 +138,7 @@ int App::Run()
 		//===============COMPUT RAYTRACING HERE====================
 
 #pragma region PostProcess
-		GLuint idPostProcess = postProcess->Process(raytracePreview);
+		GLuint idPostProcess = postProcessPipeline->Process(raytracePreview);
 #pragma endregion
 
 #pragma region Draw Raytracer Output
@@ -282,12 +282,12 @@ inline void rav::App::CreatePostProcess()
 	rvLoadFile("./data/fragment_gray.frag", gray_file, true);
 	GLuint gray_fs = rvCreateShader("fragment_gray", gray_file, RV_FRAGMENT_SHADER);
 
-	postProcess = new PostProcess(default_vs, gray_fs, width, height);
-	postProcess->setScreenQuad(screenQuadVAO, screenQuadVBO);
+	postProcessPipeline = new PostProcess(default_vs, gray_fs, width, height);
+	postProcessPipeline->setScreenQuad(screenQuadVAO, screenQuadVBO);
 
-
-	postProcess = new PostProcessDecorator(postProcess, default_vs, sobel_fs, width, height);
-	postProcess = new PostProcessDecorator(postProcess, default_vs, blur_fs, width, height);
+	//decorate the post-process, adding more steps
+	postProcessPipeline = new PostProcessDecorator(postProcessPipeline, default_vs, sobel_fs, width, height);
+	postProcessPipeline = new PostProcessDecorator(postProcessPipeline, default_vs, blur_fs, width, height);
 
 
 }
