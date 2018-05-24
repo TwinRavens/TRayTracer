@@ -1,156 +1,50 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <Filter Include="Source Files">
-      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
-      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
-    </Filter>
-    <Filter Include="Header Files">
-      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
-      <Extensions>h;hh;hpp;hxx;hm;inl;inc;xsd</Extensions>
-    </Filter>
-    <Filter Include="Resource Files">
-      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
-      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
-    </Filter>
-    <Filter Include="Header Files\Structs">
-      <UniqueIdentifier>{1e0dd235-e7a3-43e9-94ed-ed4ac43845ae}</UniqueIdentifier>
-    <Filter Include="Header Files\PostProcess">
-      <UniqueIdentifier>{ebaefa41-97e3-4ac0-a90f-30cf6e7ffbf5}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\PostProcess">
-      <UniqueIdentifier>{6becb7a2-bb29-462e-b1c7-05b1d2709ba5}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Resource Files\PostProcess">
-      <UniqueIdentifier>{2e8a6f8e-354b-4b91-bfde-82d122ffc018}</UniqueIdentifier>
-    </Filter>
+    <ClCompile Include="App.cpp" />
+    <ClCompile Include="Debug.cpp" />
+    <ClCompile Include="gRayTracer.cpp" />
+    <ClCompile Include="main.cpp" />
+    <ClCompile Include="Mesh.cpp" />
+    <ClCompile Include="gShader.cpp" />
+    <ClCompile Include="gShaderManager.cpp" />
+    <ClCompile Include="gShaderProgram.cpp" />
+    <ClCompile Include="mFileLoader.cpp" />
+    <ClCompile Include="gVertexArray.cpp" />
+    <ClCompile Include="gVertexBuffer.cpp" />
+    <ClCompile Include="PostProcess.cpp" />
+    <ClCompile Include="PostProcessDecorator.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="main.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="App.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Debug.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Mesh.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="gShader.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="gShaderManager.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="gShaderProgram.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="gVertexArray.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="gVertexBuffer.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="mFileLoader.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="gRayTracer.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="PostProcess.cpp">
-      <Filter>Source Files\PostProcess</Filter>
-    </ClCompile>
-    <ClCompile Include="PostProcessDecorator.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
+    <ClInclude Include="App.h" />
+    <ClInclude Include="Common.h" />
+    <ClInclude Include="Debug.h" />
+    <ClInclude Include="gRayTracer.h" />
+    <ClInclude Include="Light.h" />
+    <ClInclude Include="Material.h" />
+    <ClInclude Include="Math.h" />
+    <ClInclude Include="Mesh.h" />
+    <ClInclude Include="gShader.h" />
+    <ClInclude Include="gShaderAttribute.h" />
+    <ClInclude Include="mFileLoader.h" />
+    <ClInclude Include="gVertexArray.h" />
+    <ClInclude Include="gShaderManager.h" />
+    <ClInclude Include="gShaderProgram.h" />
+    <ClInclude Include="gVertexBuffer.h" />
+    <ClInclude Include="PostProcess.h" />
+    <ClInclude Include="PostProcessDecorator.h" />
+    <ClInclude Include="Primitives.h" />
+    <ClInclude Include="Ray.h" />
+    <ClInclude Include="stb_image.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="App.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Math.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Common.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Debug.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="gShader.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="gShaderAttribute.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="gShaderManager.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="gShaderProgram.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="gVertexArray.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="gVertexBuffer.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="mFileLoader.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="stb_image.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="gRayTracer.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Material.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Primitives.h">
-      <Filter>Header Files\Structs</Filter>
-    </ClInclude>
-    <ClInclude Include="Ray.h">
-      <Filter>Header Files\Structs</Filter>
-    </ClInclude>
-    <ClInclude Include="Mesh.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Light.h">
-      <Filter>Header Files\Structs</Filter>
-    <ClInclude Include="PostProcess.h">
-      <Filter>Header Files\PostProcess</Filter>
-    </ClInclude>
-    <ClInclude Include="PostProcessDecorator.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="bin\data\collisionPass.comp">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="bin\data\compute_shader.comp">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="bin\data\shadingPass.comp">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="bin\data\fragment_base.frag">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="bin\data\vertex_uv.vert">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="bin\data\blurPass.frag">
-      <Filter>Resource Files\PostProcess</Filter>
-    </None>
-    <None Include="bin\data\fragment_gray.frag">
-      <Filter>Resource Files\PostProcess</Filter>
-    </None>
-    <None Include="bin\data\fragment_sobel.frag">
-      <Filter>Resource Files\PostProcess</Filter>
-    </None>
+    <None Include="bin\data\blurPass.frag" />
+    <None Include="bin\data\compute_shader.comp" />
+    <None Include="bin\data\collisionPass.comp" />
+    <None Include="bin\data\fragment_base.frag" />
+    <None Include="bin\data\fragment_gray.frag" />
+    <None Include="bin\data\fragment_sobel.frag" />
+    <None Include="bin\data\shadingPass.comp" />
+    <None Include="bin\data\vertex_uv.vert" />
   </ItemGroup>
 </Project>

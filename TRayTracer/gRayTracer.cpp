@@ -472,6 +472,116 @@ GLint rav::RayTracer::Setup(int width, int height, int depth)
 		}
 #pragma endregion
 
+#pragma region Vertex
+		{
+			//Generate Primitives Information
+			glm_vec4 vertex[] = {
+				//	 x	 y	 z	padding
+				{	-1,	-1,	-5,	1,	},
+				{	 0,	 1,	-5,	1,	},
+				{	 1,	-1,	-5,	1	}
+			};
+
+			//Copy data to OpenGL
+			GLuint ssbo = 0;
+			glGenBuffers(1, &ssbo);
+			glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo);
+			glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(vertex), vertex, GL_STATIC_DRAW);
+
+#pragma region Collision Pass Mapping
+			{
+				//Get Shader Storage index from program
+				GLuint block_index = 0;
+				block_index = glGetProgramResourceIndex(collisionProgram, GL_SHADER_STORAGE_BLOCK, "vBuffer");
+				if (block_index == GL_INVALID_INDEX)
+					rvDebug.Log("vBuffer Storage Block couldn't be found on collision program!");
+				rvDebug.Log("vBuffer Storage Block found at index " + to_string(block_index));
+
+				//Associate buffer index with binding point
+				GLuint ssbo_binding_point_index = 4;
+
+				glShaderStorageBlockBinding(collisionProgram, block_index, ssbo_binding_point_index);
+				rvDebug.Log("vBuffer Storage Block binding is " + to_string(ssbo_binding_point_index));
+
+				glBindBufferBase(GL_SHADER_STORAGE_BUFFER, ssbo_binding_point_index, ssbo);
+			}
+#pragma endregion
+		}
+#pragma endregion
+
+#pragma region Normals
+		{
+			//Generate Primitives Information
+			glm_vec4 normals[] = {
+				//	 x	 y	 z	padding
+				{	 0,	 0,	 1,	1,	},
+				{	 0,	 0,	 1,	1,	},
+				{	 0,	 0,	 1,	1	}
+			};
+
+			//Copy data to OpenGL
+			GLuint ssbo = 0;
+			glGenBuffers(1, &ssbo);
+			glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo);
+			glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(normals), normals, GL_STATIC_DRAW);
+
+#pragma region Collision Pass Mapping
+			{
+				//Get Shader Storage index from program
+				GLuint block_index = 0;
+				block_index = glGetProgramResourceIndex(collisionProgram, GL_SHADER_STORAGE_BLOCK, "nBuffer");
+				if (block_index == GL_INVALID_INDEX)
+					rvDebug.Log("nBuffer Storage Block couldn't be found on collision program!");
+				rvDebug.Log("nBuffer Storage Block found at index " + to_string(block_index));
+
+				//Associate buffer index with binding point
+				GLuint ssbo_binding_point_index = 5;
+
+				glShaderStorageBlockBinding(collisionProgram, block_index, ssbo_binding_point_index);
+				rvDebug.Log("nBuffer Storage Block binding is " + to_string(ssbo_binding_point_index));
+
+				glBindBufferBase(GL_SHADER_STORAGE_BUFFER, ssbo_binding_point_index, ssbo);
+			}
+#pragma endregion
+		}
+#pragma endregion
+
+#pragma region Triangles
+		{
+			//Generate Primitives Information
+			Triangle triangles[] = {
+				//	1	2	3	padding
+				{	0,	1,	2,	1	},	//Vertices
+				{	0,	1,	2,	1	}	//Normals
+			};
+
+			//Copy data to OpenGL
+			GLuint ssbo = 0;
+			glGenBuffers(1, &ssbo);
+			glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo);
+			glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(triangles), triangles, GL_STATIC_DRAW);
+
+#pragma region Collision Pass Mapping
+			{
+				//Get Shader Storage index from program
+				GLuint block_index = 0;
+				block_index = glGetProgramResourceIndex(collisionProgram, GL_SHADER_STORAGE_BLOCK, "tBuffer");
+				if (block_index == GL_INVALID_INDEX)
+					rvDebug.Log("tBuffer Storage Block couldn't be found on collision program!");
+				rvDebug.Log("tBuffer Storage Block found at index " + to_string(block_index));
+
+				//Associate buffer index with binding point
+				GLuint ssbo_binding_point_index = 6;
+
+				glShaderStorageBlockBinding(collisionProgram, block_index, ssbo_binding_point_index);
+				rvDebug.Log("tBuffer Storage Block binding is " + to_string(ssbo_binding_point_index));
+
+				glBindBufferBase(GL_SHADER_STORAGE_BUFFER, ssbo_binding_point_index, ssbo);
+			}
+#pragma endregion
+		}
+#pragma endregion
+
 #pragma region Materials
 		{
 
@@ -502,7 +612,7 @@ GLint rav::RayTracer::Setup(int width, int height, int depth)
 				rvDebug.Log("sMatBuffer Storage Block found at index " + to_string(block_index));
 
 				//Associate buffer index with binding point
-				GLuint ssbo_binding_point_index = 4;
+				GLuint ssbo_binding_point_index = 7;
 
 				glShaderStorageBlockBinding(shadingProgram, block_index, ssbo_binding_point_index);
 				rvDebug.Log("sMatBuffer Storage Block binding is " + to_string(ssbo_binding_point_index));
@@ -514,7 +624,6 @@ GLint rav::RayTracer::Setup(int width, int height, int depth)
 
 		}
 #pragma endregion
-
 
 #pragma region Lights
 		{
@@ -542,7 +651,7 @@ GLint rav::RayTracer::Setup(int width, int height, int depth)
 				rvDebug.Log("sLightBuffer Storage Block found at index " + to_string(block_index));
 
 				//Associate buffer index with binding point
-				GLuint ssbo_binding_point_index = 5;
+				GLuint ssbo_binding_point_index = 8;
 
 				glShaderStorageBlockBinding(shadingProgram, block_index, ssbo_binding_point_index);
 				rvDebug.Log("sLightBuffer Storage Block binding is " + to_string(ssbo_binding_point_index));
@@ -554,7 +663,6 @@ GLint rav::RayTracer::Setup(int width, int height, int depth)
 
 		}
 #pragma endregion
-
 
 	}
 #pragma endregion

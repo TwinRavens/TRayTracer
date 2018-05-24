@@ -59,7 +59,7 @@ layout (std140) buffer sLightBuffer
 
 
 //===========AUXILIAR=FUNCTIONS===========//
-//These are implemented in hardware, that's why they use vec4s
+//These are implemented in hardware, that's why they could use vec4s
 //Could stack 4 values at a time for comparisong
 
 //Returns 0 when x equals y and 1 when not

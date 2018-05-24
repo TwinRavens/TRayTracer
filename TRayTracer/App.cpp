@@ -103,7 +103,7 @@ int App::Initialize(cint &width, cint &height, str name, bool fullscreen, bool v
 	glClearColor(0.0f, 0.4509803921568627f, 0.8980392156862745f, 1.0f);
 
 	//Initialize Raytracer
-	RayTracer::Setup(width, height, 3);
+	RayTracer::Setup(width, height, 1);
 
 	//Return no error message
 	return 0;
@@ -213,13 +213,13 @@ void App::CreateScreenQuad() {
 	GLint vc_loc = rvGetAttributeLoc(defaultPrg, "vertex_coords");		//Get attribute location (after linking!)
 
 	float points[] = {
-		//Position			  //UV
+		//Position				//UV
 		-1.0f, -1.0f,  0.0f,	0.0f,  0.0f, //Bottom left
-		1.0f,  1.0f,  0.0f,	1.0f,  1.0f, //Top-right
+		 1.0f,  1.0f,  0.0f,	1.0f,  1.0f, //Top-right
 		-1.0f,  1.0f,  0.0f,	0.0f,  1.0f, //Top-left
 		-1.0f, -1.0f,  0.0f,	0.0f,  0.0f, //Bottom-left
-		1.0f, -1.0f,  0.0f,	1.0f,  0.0f, //Bottom-right
-		1.0f,  1.0f,  0.0f,	1.0f,  1.0f  //Top-right
+		 1.0f, -1.0f,  0.0f,	1.0f,  0.0f, //Bottom-right
+		 1.0f,  1.0f,  0.0f,	1.0f,  1.0f  //Top-right
 	};
 
 
@@ -253,7 +253,6 @@ void App::CreateScreenQuad() {
 	//Copy data to VertexBuffer Object
 	screenQuadVBO->Fill(sizeof(points), points);
 
-
 	//Enable locations for the created shader program
 	screenQuadVAO->EnableLocations(defaultPrg);
 
@@ -282,12 +281,12 @@ inline void rav::App::CreatePostProcess()
 	rvLoadFile("./data/fragment_gray.frag", gray_file, true);
 	GLuint gray_fs = rvCreateShader("fragment_gray", gray_file, RV_FRAGMENT_SHADER);
 
-	postProcessPipeline = new PostProcess(default_vs, gray_fs, width, height);
+	postProcessPipeline = new PostProcess(default_vs, default_fs, width, height);
 	postProcessPipeline->setScreenQuad(screenQuadVAO, screenQuadVBO);
 
 	//decorate the post-process, adding more steps
-	postProcessPipeline = new PostProcessDecorator(postProcessPipeline, default_vs, sobel_fs, width, height);
-	postProcessPipeline = new PostProcessDecorator(postProcessPipeline, default_vs, blur_fs, width, height);
+	//postProcessPipeline = new PostProcessDecorator(postProcessPipeline, default_vs, sobel_fs, width, height);
+	//postProcessPipeline = new PostProcessDecorator(postProcessPipeline, default_vs, blur_fs, width, height);
 
 
 }
