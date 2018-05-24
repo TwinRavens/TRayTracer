@@ -167,6 +167,8 @@
     <ClCompile Include="mFileLoader.cpp" />
     <ClCompile Include="gVertexArray.cpp" />
     <ClCompile Include="gVertexBuffer.cpp" />
+    <ClCompile Include="PostProcess.cpp" />
+    <ClCompile Include="PostProcessDecorator.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="App.h" />
@@ -184,6 +186,8 @@
     <ClInclude Include="gShaderManager.h" />
     <ClInclude Include="gShaderProgram.h" />
     <ClInclude Include="gVertexBuffer.h" />
+    <ClInclude Include="PostProcess.h" />
+    <ClInclude Include="PostProcessDecorator.h" />
     <ClInclude Include="Primitives.h" />
     <ClInclude Include="Ray.h" />
     <ClInclude Include="stb_image.h" />
@@ -197,6 +201,8 @@
       <FileType>Document</FileType>
     </None>
     <None Include="bin\data\fragment_base.frag" />
+    <None Include="bin\data\fragment_gray.frag" />
+    <None Include="bin\data\fragment_sobel.frag" />
     <None Include="bin\data\shadingPass.comp">
       <FileType>Document</FileType>
     </None>
