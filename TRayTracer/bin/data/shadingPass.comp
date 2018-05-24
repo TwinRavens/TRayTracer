@@ -46,9 +46,17 @@ layout (std140) buffer sMatBuffer
 	Material materials[];
 };
 
-//define light
-vec3 lightPos = vec3(0.0, 0.0, 0.0);
-vec4 lightColor = vec4(1.0, 1.0, 1.0, 1.0);
+struct Light 
+{
+	vec4 lightPosCount;
+	vec4 lightColor;
+};
+
+layout (std140) buffer sLightBuffer
+{
+	Light lights[];
+};
+
 
 //===========AUXILIAR=FUNCTIONS===========//
 //These are implemented in hardware, that's why they use vec4s
@@ -64,27 +72,33 @@ vec4 shade(vec3 point, vec3 normal, vec3 rayDir, int objId) {
 		//ambient
 		float ka = materials[objId].specDiffAmbiCoefShinness.z;  //coeficient of ambient light
 		vec4 ia = ambientColour * ka;
+		vec4 final = ia;
 
 		//diffuse
 		float kd = materials[objId].specDiffAmbiCoefShinness.y; // coeficient of diffuse light
 		vec4 diffuseColor = vec4(materials[objId].diffColAlpha.rgb, 1); // color from the object
 
-		vec3 lightDir = normalize(lightPos - point);
-		float diffuse = clamp(dot(lightDir, normal), 0, 1);
-		vec4 id = kd * diffuse * diffuseColor * lightColor;
+		for (int i = 0; i < lights[0].lightPosCount.w; i++) {
 
-		//specular TODO: review this
-		float ks = materials[objId].specDiffAmbiCoefShinness.x;
-		float specullarPower = materials[objId].specDiffAmbiCoefShinness.w;
+			vec3 lightDir = normalize(lights[i].lightPosCount.xyz - point);
+			float diffuse = clamp(dot(lightDir, normal), 0, 1);
+			vec4 id = kd * diffuse * diffuseColor * lights[i].lightColor;
 
-		//Reflect = lightDir - 2 * normal * dot(normal, lightDir)
-		//Ou normalize(2 * normal * dot(normal, lightDir) - lightDir) quando o raio vem da fonte de luz
-		vec3 reflection = normalize(lightDir - 2 * normal * diffuse);
-		float specular = clamp(abs(pow(dot(reflection, rayDir), specullarPower)), 0, 1);
-		
-		vec4 is = ks * specular * lightColor;
+			//specular TODO: review this
+			float ks = materials[objId].specDiffAmbiCoefShinness.x;
+			float specullarPower = materials[objId].specDiffAmbiCoefShinness.w;
 
-		return (ia + id + is);
+			//Reflect = lightDir - 2 * normal * dot(normal, lightDir)
+			//Ou normalize(2 * normal * dot(normal, lightDir) - lightDir) quando o raio vem da fonte de luz
+			vec3 reflection = normalize(lightDir - 2 * normal * diffuse);
+			float specular = clamp(abs(pow(dot(reflection, rayDir), specullarPower)), 0, 1);
+			
+			vec4 is = ks * specular * lights[i].lightColor;
+
+			final += id + is;
+		}
+
+		return final;
 }
 
 void main() {
