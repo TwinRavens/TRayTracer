@@ -6,4 +6,4 @@ Solution for Visual Studio 2017, outputs everything on the BIN folder under TRay
 
 A GPU with openGL 4.3 is needed for it to work.
 
-Developed by [Gabriel Lanzer Kannenberg](https://gabriellanzer.github.io/) and [Luiz Augusto Wendt](https://lawendt.github.io/) (@lawendt).
+Developed by [Gabriel Lanzer Kannenberg](https://gabriellanzer.github.io/)(@gabriellkann) and [Luiz Augusto Wendt](https://lawendt.github.io/) (@lawendt).
