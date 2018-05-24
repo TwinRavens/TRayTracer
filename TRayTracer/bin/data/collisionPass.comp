@@ -43,6 +43,16 @@ layout (std140) buffer sBuffer
 	Spheres spheres[];
 };
 
+layout (std140) buffer vBuffer
+{
+	vec4 vertices[];
+};
+
+layout (std140) buffer tBuffer
+{
+	ivec4 triangles[];
+};
+
 //===========AUXILIAR=FUNCTIONS===========//
 //These are implemented in hardware, that's why they use vec4s
 //Could stack 4 values at a time for comparisong
@@ -76,6 +86,9 @@ void main()
 	//Get working ray id
 	const int rayId = int(gl_GlobalInvocationID.x);
 
+	//Get working triangle id
+	const int triangleId = int(gl_GlobalInvocationID.y);
+
 	//Create ray's if first depth pass
 	if(depthLevel == 0)
 	{
@@ -95,64 +108,49 @@ void main()
 		rays[rayId].origAndWght = origin;
 		rays[rayId].dir = vec4(dir, 0);
 		rays[rayId].pixelCoords = screen_coord.xyxy;
+
 	}
+
+	//Get triangle vertices
+	vec3 v1 = vertices[triangles[triangleId][0]].xyz; //First Vertex
+	vec3 v2 = vertices[triangles[triangleId][1]].xyz; //Second Vertex
+	vec3 v3 = vertices[triangles[triangleId][2]].xyz; //Third Vertex
+
+	//Get triangle side vectors
+	vec3 tu = v2-v1;	//Triangle U component
+	vec3 tv = v3-v1;	//Triangle V component
 
 	//Get ray info
-	const ivec2 pixelCoords = rays[rayId].pixelCoords.xy;
-	const vec3 rayOrigin = rays[rayId].origAndWght.xyz;
-	const vec3 rayDir = rays[rayId].dir.xyz;
+	ivec2 pixelCoords = rays[rayId].pixelCoords.xy;
+	vec3 rayOrigin = rays[rayId].origAndWght.xyz;
+	vec3 rayDir = rays[rayId].dir.xyz;
 
-	int indexClosestSphere = -1;
-	float closestDelta = 4294967296.0;
+	//=====Solve for collision=====//
+	//Triangle origin to ray origin vector
+	vec3 tr = rayOrigin - v1;
 
-	//TODO: use float variables as IDs when possible and do comparations 4 by 4 (hardware implemented)
-	for(int i = 0; i < spheresCount; i++)
+	//Determinant for inverse matrix
+	float invdet = 1.0/abs(dot(tu, cross(tv, rayDir)));
+
+	//Solve component parameters
+	float u = dot(cross(tv, rayDir) * invdet, tr);
+	float v = dot(cross(rayDir, tu) * invdet, tr);
+	float t = -dot(cross(tu, tv) * invdet, tr);
+
+	//Use 'u' and 'v' to check for triangle boundaries
+	if (u > 0 && v > 0 && (u+v) <= 1 && t >= 0)
 	{
-		//define sphere
-		vec3 sphereCenter = spheres[i].posAndScale.xyz;
-		float sphereRadius = spheres[i].posAndScale.w;
+		//TODO: Check for closest hit
+		vec3 hit = rayOrigin + rayDir * t;
 
-		//region collision with sphere
-		vec3 omc = rayOrigin - sphereCenter; 
-		float b = dot(rayDir, omc);
-		float c = dot(omc, omc) - sphereRadius * sphereRadius;
-		float delta = b * b - c;
-
-		//When delta is positive, calculate hitT, otherwise leave zero
-		float hitT = step(0, delta) * (-b - delta); //SMALL PERFORMANCE GAIN WITH THIS ONE
-
-		//PERFORMANCE LOST WITH THIS ONE - TODO: EVALUATE THIS AND TRY MORE PERFORMANCE GAINS
-		//Returns 1 when hit is the closest hit and 0 when not
-//		float isClosestHit = (step(hitT, closestDelta)*(1-step(hitT, 1)));
-//		indexClosestSphere = mix(i, indexClosestSphere, (1 - isClosestHit));
-//		closestDelta = mix(hitT, closestDelta, 1-isClosestHit);
-
-		// hit one or both sides
-//		if (delta >= 0.0) {			<======OPTIMIZED!
-//			hitT = -b - delta;
-			if (hitT < closestDelta && hitT > 1) { //TODO: OPTIMIZE THIS!
-				indexClosestSphere = i;
-				closestDelta = hitT;
-			}
-//		}
-	}
-
-	if(indexClosestSphere != -1)
-	{
-		vec3 sphereCenter = spheres[indexClosestSphere].posAndScale.xyz;
-		//vec3 sphereCenter = vec3(indexClosestSphere * 5 - 15, sin(time + indexClosestSphere*0.5f) * 3, -10.0);
-		float sphereRadius = spheres[indexClosestSphere].posAndScale.w;
-
-		vec3 hit = rayOrigin + rayDir * closestDelta;
-		vec3 normal = (hit-sphereCenter);
+		//TODO: Interpolate normals
+		vec3 normal = vec3(0, 0, 1);
 		normal = normalize(normal);
 
-		//Store data in Raycast Hit structures
-		hits[rayId] = RayHit(vec4(hit, rays[rayId].origAndWght.w), vec4(normal, 0), vec4(rayDir, 0), ivec4(pixelCoords.xy, indexClosestSphere, 1));
-
+		hits[rayId] = RayHit(vec4(hit, rays[rayId].origAndWght.w), vec4(normal, 0), vec4(rayDir, 0), ivec4(pixelCoords.xy, triangleId, 1));
 	}
 	else
 	{
-		hits[rayId] = RayHit(rays[rayId].origAndWght, vec4(rayDir, 0), vec4(rayDir, 0), ivec4(pixelCoords.xy, indexClosestSphere, 1));
+		hits[rayId] = RayHit(rays[rayId].origAndWght, vec4(rayDir, 0), vec4(rayDir, 0), ivec4(pixelCoords.xy, -1, 1));
 	}
 }
