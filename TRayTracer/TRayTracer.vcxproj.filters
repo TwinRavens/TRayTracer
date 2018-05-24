@@ -13,6 +13,15 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Header Files\PostProcess">
+      <UniqueIdentifier>{ebaefa41-97e3-4ac0-a90f-30cf6e7ffbf5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\PostProcess">
+      <UniqueIdentifier>{6becb7a2-bb29-462e-b1c7-05b1d2709ba5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files\PostProcess">
+      <UniqueIdentifier>{2e8a6f8e-354b-4b91-bfde-82d122ffc018}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -46,6 +55,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="gRayTracer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="PostProcess.cpp">
+      <Filter>Source Files\PostProcess</Filter>
+    </ClCompile>
+    <ClCompile Include="PostProcessDecorator.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -101,6 +116,12 @@
     <ClInclude Include="Material.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="PostProcess.h">
+      <Filter>Header Files\PostProcess</Filter>
+    </ClInclude>
+    <ClInclude Include="PostProcessDecorator.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="bin\data\collisionPass.comp">
@@ -115,11 +136,17 @@
     <None Include="bin\data\fragment_base.frag">
       <Filter>Resource Files</Filter>
     </None>
-    <None Include="bin\data\blurPass.frag">
-      <Filter>Resource Files</Filter>
-    </None>
     <None Include="bin\data\vertex_uv.vert">
       <Filter>Resource Files</Filter>
+    </None>
+    <None Include="bin\data\blurPass.frag">
+      <Filter>Resource Files\PostProcess</Filter>
+    </None>
+    <None Include="bin\data\fragment_gray.frag">
+      <Filter>Resource Files\PostProcess</Filter>
+    </None>
+    <None Include="bin\data\fragment_sobel.frag">
+      <Filter>Resource Files\PostProcess</Filter>
     </None>
   </ItemGroup>
 </Project>
