@@ -14,7 +14,7 @@ GLint rav::RayTracer::generateRays()
 
 		//Define the number of rays by screen width and heigh
 		screenArea = (width*height);
-		raysSize = (width * height) * pow(2, depthLevel-1);
+		raysSize = (width * height) * pow(2, depthLevel - 1);
 
 #if ORTOGRAPHIC
 		//Ortographic camera rays
@@ -423,7 +423,7 @@ GLint rav::RayTracer::Setup(int width, int height, int depth)
 		return error;
 
 	//TODO: Move the objects handling to some resources manager
-#pragma region Passing Primitives Buffer to Shader
+#pragma region Passing Buffers to Shader
 	{
 
 #pragma region Spheres
@@ -498,7 +498,7 @@ GLint rav::RayTracer::Setup(int width, int height, int depth)
 				GLuint block_index = 0;
 				block_index = glGetProgramResourceIndex(shadingProgram, GL_SHADER_STORAGE_BLOCK, "sMatBuffer");
 				if (block_index == GL_INVALID_INDEX)
-					rvDebug.Log("sMatBuffer Storage Block couldn't be found on collision program!");
+					rvDebug.Log("sMatBuffer Storage Block couldn't be found on shading program!");
 				rvDebug.Log("sMatBuffer Storage Block found at index " + to_string(block_index));
 
 				//Associate buffer index with binding point
@@ -514,7 +514,47 @@ GLint rav::RayTracer::Setup(int width, int height, int depth)
 
 		}
 #pragma endregion
-		
+
+
+#pragma region Lights
+		{
+
+			Light lights[] = {
+			//x		y		z	count	r		g		b		a
+			{5.0,	0.0,	2.0,	3,	1.0,	0.0,	0.0,	1.0 },
+			{0.0,	-2.0,	0.0,	3,	0.0,	1.0,	0.0,	1.0},
+			{-5.0,	1.0,	-1.0,	3,	1.0,	0.0,	1.0,	1.0 },
+			};
+
+			//Copy data to OpenGL
+			GLuint ssbo = 0;
+			glGenBuffers(1, &ssbo);
+			glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo);
+			glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(lights), lights, GL_STATIC_DRAW);
+
+#pragma region Shading Pass Mapping
+			{
+				//Get Shader Storage index from program
+				GLuint block_index = 0;
+				block_index = glGetProgramResourceIndex(shadingProgram, GL_SHADER_STORAGE_BLOCK, "sLightBuffer");
+				if (block_index == GL_INVALID_INDEX)
+					rvDebug.Log("sLightBuffer Storage Block couldn't be found on shading program!");
+				rvDebug.Log("sLightBuffer Storage Block found at index " + to_string(block_index));
+
+				//Associate buffer index with binding point
+				GLuint ssbo_binding_point_index = 5;
+
+				glShaderStorageBlockBinding(shadingProgram, block_index, ssbo_binding_point_index);
+				rvDebug.Log("sLightBuffer Storage Block binding is " + to_string(ssbo_binding_point_index));
+
+				glBindBufferBase(GL_SHADER_STORAGE_BUFFER, ssbo_binding_point_index, ssbo);
+
+			}
+#pragma endregion
+
+		}
+#pragma endregion
+
 
 	}
 #pragma endregion
