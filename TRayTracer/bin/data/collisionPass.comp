@@ -48,6 +48,11 @@ layout (std140) buffer vBuffer
 	vec4 vertices[];
 };
 
+layout (std140) buffer nBuffer
+{
+	vec4 normals[];
+};
+
 layout (std140) buffer tBuffer
 {
 	ivec4 triangles[];
