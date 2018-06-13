@@ -152,7 +152,10 @@ void main()
 		vec3 normal = vec3(0, 0, 1);
 		normal = normalize(normal);
 
-		hits[rayId] = RayHit(vec4(hit, rays[rayId].origAndWght.w), vec4(normal, 0), vec4(rayDir, 0), ivec4(pixelCoords.xy, triangleId, 1));
+		if(hits[rayId].rayDir.w > t)
+		{
+			hits[rayId] = RayHit(vec4(hit, rays[rayId].origAndWght.w), vec4(normal, 0), vec4(rayDir, 0), ivec4(pixelCoords.xy, triangleId, 1));
+		}
 	}
 	else
 	{
