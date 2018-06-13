@@ -53,9 +53,15 @@ layout (std140) buffer nBuffer
 	vec4 normals[];
 };
 
+struct Triangle
+{
+	ivec4 vId;
+	ivec4 nId;
+};
+
 layout (std140) buffer tBuffer
 {
-	ivec4 triangles[];
+	Triangle triangles[];
 };
 
 //===========AUXILIAR=FUNCTIONS===========//
@@ -85,9 +91,6 @@ vec4 when_le(vec4 x, vec4 y) {
 
 void main()
 {
-	// base pixel colour for image
-	vec4 pixel = const vec4(0.0f, 0.4509803921568627f, 0.8980392156862745f, 1.0f);
-
 	//Get working ray id
 	const int rayId = int(gl_GlobalInvocationID.x);
 
@@ -117,9 +120,9 @@ void main()
 	}
 
 	//Get triangle vertices
-	vec3 v1 = vertices[triangles[triangleId][0]].xyz; //First Vertex
-	vec3 v2 = vertices[triangles[triangleId][1]].xyz; //Second Vertex
-	vec3 v3 = vertices[triangles[triangleId][2]].xyz; //Third Vertex
+	vec3 v1 = vertices[triangles[triangleId].vId[0]].xyz; //First Vertex
+	vec3 v2 = vertices[triangles[triangleId].vId[1]].xyz; //Second Vertex
+	vec3 v3 = vertices[triangles[triangleId].vId[2]].xyz; //Third Vertex
 
 	//Get triangle side vectors
 	vec3 tu = v2-v1;	//Triangle U component
@@ -149,16 +152,17 @@ void main()
 		vec3 hit = rayOrigin + rayDir * t;
 
 		//TODO: Interpolate normals
-		vec3 normal = vec3(0, 0, 1);
+		//Get triangle vertices
+		vec3 n1 = normals[triangles[triangleId].nId[0]].xyz; //First Vertex
+		vec3 n2 = normals[triangles[triangleId].nId[1]].xyz; //Second Vertex
+		vec3 n3 = normals[triangles[triangleId].nId[2]].xyz; //Third Vertex
+		vec3 normal = n1 * (1.0f-(u+v)) + n2 * u + n3 * v;
+		normal = vec3(0, 0, 1);
 		normal = normalize(normal);
 
-		if(hits[rayId].rayDir.w > t)
+		if(hits[rayId].rayDir.w > t || depthLevel == 0)
 		{
-			hits[rayId] = RayHit(vec4(hit, rays[rayId].origAndWght.w), vec4(normal, 0), vec4(rayDir, 0), ivec4(pixelCoords.xy, triangleId, 1));
+			hits[rayId] = RayHit(vec4(hit, rays[rayId].origAndWght.w), vec4(normal, 0), vec4(rayDir, t), ivec4(pixelCoords.xy, triangleId, 1));
 		}
-	}
-	else
-	{
-		hits[rayId] = RayHit(rays[rayId].origAndWght, vec4(rayDir, 0), vec4(rayDir, 0), ivec4(pixelCoords.xy, -1, 1));
 	}
 }
