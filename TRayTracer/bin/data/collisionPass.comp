@@ -157,7 +157,6 @@ void main()
 		vec3 n2 = normals[triangles[triangleId].nId[1]].xyz; //Second Vertex
 		vec3 n3 = normals[triangles[triangleId].nId[2]].xyz; //Third Vertex
 		vec3 normal = n1 * (1.0f-(u+v)) + n2 * u + n3 * v;
-		normal = vec3(0, 0, 1);
 		normal = normalize(normal);
 
 		if(hits[rayId].rayDir.w > t || depthLevel == 0)
