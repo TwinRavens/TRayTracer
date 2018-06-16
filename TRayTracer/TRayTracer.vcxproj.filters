@@ -104,14 +104,30 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="bin\data\blurPass.frag" />
-    <None Include="bin\data\compute_shader.comp" />
-    <None Include="bin\data\collisionPass.comp" />
-    <None Include="bin\data\fragment_base.frag" />
-    <None Include="bin\data\fragment_gray.frag" />
-    <None Include="bin\data\fragment_sobel.frag" />
-    <None Include="bin\data\shadingPass.comp" />
-    <None Include="bin\data\vertex_uv.vert" />
+    <None Include="bin\data\vertex_uv.vert">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="bin\data\fragment_base.frag">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="bin\data\collisionPass.comp">
+      <Filter>Shaders\RayTracer</Filter>
+    </None>
+    <None Include="bin\data\compute_shader.comp">
+      <Filter>Shaders\RayTracer</Filter>
+    </None>
+    <None Include="bin\data\shadingPass.comp">
+      <Filter>Shaders\RayTracer</Filter>
+    </None>
+    <None Include="bin\data\blurPass.frag">
+      <Filter>Shaders\PostProcess</Filter>
+    </None>
+    <None Include="bin\data\fragment_gray.frag">
+      <Filter>Shaders\PostProcess</Filter>
+    </None>
+    <None Include="bin\data\fragment_sobel.frag">
+      <Filter>Shaders\PostProcess</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Header">
@@ -146,6 +162,12 @@
     </Filter>
     <Filter Include="Source\RayTracer">
       <UniqueIdentifier>{d59ff76f-7451-4a39-9dbc-a56d2de5239e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Shaders\PostProcess">
+      <UniqueIdentifier>{afa13031-7915-4708-9bbd-217c20ba9d14}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Shaders\RayTracer">
+      <UniqueIdentifier>{43e0cef5-4cbf-42c7-8473-d7935d2438da}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>
