@@ -40,6 +40,9 @@
     <ClCompile Include="gRayTracer.cpp">
       <Filter>Source\RayTracer</Filter>
     </ClCompile>
+    <ClCompile Include="Object.cpp">
+      <Filter>Source\RayTracer</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="App.h">
@@ -102,6 +105,9 @@
     <ClInclude Include="Ray.h">
       <Filter>Header\RayTracer\Data</Filter>
     </ClInclude>
+    <ClInclude Include="Object.h">
+      <Filter>Header\RayTracer</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="bin\data\vertex_uv.vert">
@@ -132,6 +138,7 @@
   <ItemGroup>
     <Filter Include="Header">
       <UniqueIdentifier>{9667cbf3-6469-4a56-b091-64793b87bf8c}</UniqueIdentifier>
+      <Extensions>h</Extensions>
     </Filter>
     <Filter Include="Header\Ravine">
       <UniqueIdentifier>{8efa42b6-4874-4f8c-a71a-ae19390b858b}</UniqueIdentifier>
@@ -141,6 +148,7 @@
     </Filter>
     <Filter Include="Shaders">
       <UniqueIdentifier>{441703a6-36e1-4fa8-beb7-3d5e40c2c826}</UniqueIdentifier>
+      <Extensions>comp;frag;vert</Extensions>
     </Filter>
     <Filter Include="Header\RayTracer">
       <UniqueIdentifier>{169d217b-394e-4809-a7b2-7dbc84b1ad9f}</UniqueIdentifier>
@@ -153,6 +161,7 @@
     </Filter>
     <Filter Include="Source">
       <UniqueIdentifier>{fc930e2b-d8f1-4d1e-854c-aacc67b0f852}</UniqueIdentifier>
+      <Extensions>cpp</Extensions>
     </Filter>
     <Filter Include="Source\Ravine">
       <UniqueIdentifier>{8e1119aa-de62-43cf-ac20-91698a9c9973}</UniqueIdentifier>

@@ -167,6 +167,7 @@
     <ClCompile Include="mFileLoader.cpp" />
     <ClCompile Include="gVertexArray.cpp" />
     <ClCompile Include="gVertexBuffer.cpp" />
+    <ClCompile Include="Object.cpp" />
     <ClCompile Include="PostProcess.cpp" />
     <ClCompile Include="PostProcessDecorator.cpp" />
   </ItemGroup>
@@ -186,6 +187,7 @@
     <ClInclude Include="gShaderManager.h" />
     <ClInclude Include="gShaderProgram.h" />
     <ClInclude Include="gVertexBuffer.h" />
+    <ClInclude Include="Object.h" />
     <ClInclude Include="PostProcess.h" />
     <ClInclude Include="PostProcessDecorator.h" />
     <ClInclude Include="Primitives.h" />
