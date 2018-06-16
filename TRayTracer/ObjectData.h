@@ -7,4 +7,5 @@ struct ObjectData {
 	glm::vec3* vertices;
 	glm::vec3* normal;
 	int verticesCount = 0;
+	int triangleCount = 0;
 };
