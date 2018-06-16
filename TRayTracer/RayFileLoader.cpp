@@ -74,6 +74,9 @@ ObjectData* RayFileLoader::LoadObject(const std::string& path)
 			finalObject->verticesCount += temp[i]->verticesCount;
 		}
 
+		finalObject->vertices = new glm::vec3[finalObject->verticesCount];
+		finalObject->normal = new glm::vec3[finalObject->verticesCount];
+
 		//get all of the objectData together
 		for (int i = 0, j = 0; i < scene->mNumMeshes; i++)
 		{
