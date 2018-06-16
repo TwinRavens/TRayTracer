@@ -170,6 +170,7 @@
     <ClCompile Include="Object.cpp" />
     <ClCompile Include="PostProcess.cpp" />
     <ClCompile Include="PostProcessDecorator.cpp" />
+    <ClCompile Include="RayFileLoader.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="App.h" />
@@ -192,6 +193,7 @@
     <ClInclude Include="PostProcessDecorator.h" />
     <ClInclude Include="Primitives.h" />
     <ClInclude Include="Ray.h" />
+    <ClInclude Include="RayFileLoader.h" />
     <ClInclude Include="stb_image.h" />
   </ItemGroup>
   <ItemGroup>

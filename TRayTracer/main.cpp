@@ -1,11 +1,13 @@
 #include <iostream>
 #include "App.h"
+#include "RayFileLoader.h"
 
 int main()
 {
 	//Define erro code
 	int errc = 0;
-
+	
+	ObjectData *data = RayFileLoader::LoadObject("./data/mesh/cube.obj");
 	//Initialize App
 	errc = rvApp.Initialize(1920, 1080, "TRayTracer", false, false);
 

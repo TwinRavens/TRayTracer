@@ -43,6 +43,9 @@
     <ClCompile Include="Object.cpp">
       <Filter>Source\RayTracer</Filter>
     </ClCompile>
+    <ClCompile Include="RayFileLoader.cpp">
+      <Filter>Source\RayTracer</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="App.h">
@@ -106,6 +109,9 @@
       <Filter>Header\RayTracer\Data</Filter>
     </ClInclude>
     <ClInclude Include="Object.h">
+      <Filter>Header\RayTracer</Filter>
+    </ClInclude>
+    <ClInclude Include="RayFileLoader.h">
       <Filter>Header\RayTracer</Filter>
     </ClInclude>
   </ItemGroup>
