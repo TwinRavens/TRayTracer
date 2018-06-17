@@ -55,8 +55,8 @@ layout (std140) buffer nBuffer
 
 struct Triangle
 {
-	ivec4 vId;
-	ivec4 nId;
+	uvec4 vId;
+	uvec4 nId;
 };
 
 layout (std140) buffer tBuffer

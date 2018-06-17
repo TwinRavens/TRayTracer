@@ -29,11 +29,12 @@ ObjectData* RayFileLoader::InterpretMesh(aiMesh * mesh)
 	}
 
 	count = data->triangleCount = mesh->mNumFaces;
+	data->triangles = new Triangle[count];
 	for (int i = 0; i < count; i++)
 	{
 
-		data->triangles[i] = Triangle{  mesh->mFaces->mIndices[0], mesh->mFaces->mIndices[1], mesh->mFaces->mIndices[2],
-										mesh->mFaces->mIndices[0], mesh->mFaces->mIndices[1], mesh->mFaces->mIndices[2] };
+		data->triangles[i] = Triangle{  mesh->mFaces[i].mIndices[0], mesh->mFaces[i].mIndices[1], mesh->mFaces[i].mIndices[2], 0,
+										mesh->mFaces[i].mIndices[0], mesh->mFaces[i].mIndices[1], mesh->mFaces[i].mIndices[2], 0 };
 	}
 
 	return data;
@@ -88,15 +89,20 @@ ObjectData* RayFileLoader::LoadObject(const std::string& path)
 		finalObject->triangles = new Triangle[finalObject->triangleCount];
 
 		//get all of the objectData together
-		for (int i = 0, j = 0; i < scene->mNumMeshes; i++)
+		for (int i = 0, cVert = 0, cTri = 0; i < scene->mNumMeshes; i++)
 		{
-			for (int k = 0; k < temp[i]->verticesCount; k++, j++)
+			for (int k = 0; k < temp[i]->verticesCount; k++, cVert++)
 			{
-				finalObject->vertices[j] = temp[i]->vertices[k];
-				finalObject->normal[j] = temp[i]->normal[k];
+				finalObject->vertices[cVert] = temp[i]->vertices[k];
+				finalObject->normal[cVert] = temp[i]->normal[k];
+			}
+			for (int k = 0; k < temp[i]->triangleCount; k++, cTri++)
+			{
+				finalObject->triangles[cTri] = temp[i]->triangles[k];
 			}
 			delete temp[i];
 		}
+				
 
 		return finalObject;
 	}
