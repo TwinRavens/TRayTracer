@@ -50,6 +50,7 @@ namespace rav
 		VertexBuffer* screenQuadVBO;
 		GLuint defaultPrg;
 		PostProcess *postProcessPipeline;
+		RayTracer raytracer;
 
 		void CreateDefaultProgram();
 		void CreateScreenQuad();

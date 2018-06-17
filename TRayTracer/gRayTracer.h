@@ -24,40 +24,45 @@
 
 namespace rav
 {
-	static class RayTracer
+	class RayTracer
 	{
 	private:
+		ObjectData * objData;
+		int screenArea;
+		Ray* rays;
+
+
 		//Raytracer programs
-		static GLint collisionProgram, shadingProgram;
+		GLint collisionProgram, shadingProgram;
 
 		//Screen data
-		static int width, height, raysSize, depthLevel;
-		static GLuint screenBuffer;
+		int width, height, raysSize, depthLevel;
+		GLuint screenBuffer;
 
 		//Shader Storage Buffer Objects
-		static GLuint raysBuffer, rayHitsBuffer;
+		GLuint raysBuffer, rayHitsBuffer;
 
 		//Rays generation
-		static GLint generateRays();
+		GLint generateRays();
 
 		//Load Compute Shaders
-		static GLint loadPrograms();
+		GLint loadPrograms();
 
 		//Collision pass
-		static GLint collisionPass(int depth_level);
+		GLint collisionPass(int depth_level);
 
 		//Shading pass
-		static GLint shadingPass(int depth_level);
+		GLint shadingPass(int depth_level);
 
-		//Private constructor to avoid overriding
-		RayTracer();
 
 	public:
+		RayTracer();
+
 		//Set up screen buffers, load shaders
-		static GLint Setup(int screen_width, int screen_height, int depth_level = 2);
+		GLint Setup(int screen_width, int screen_height, int depth_level = 2);
 
 		//Renders a full image with given trace depth
-		static GLint Compute();
+		GLint Compute();
 
 	};
 

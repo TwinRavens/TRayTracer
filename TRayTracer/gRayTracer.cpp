@@ -1,11 +1,5 @@
 #include "gRayTracer.h"
 
-int rav::RayTracer::height, rav::RayTracer::width, rav::RayTracer::depthLevel, rav::RayTracer::raysSize;
-GLuint rav::RayTracer::screenBuffer, rav::RayTracer::raysBuffer, rav::RayTracer::rayHitsBuffer;
-GLint rav::RayTracer::collisionProgram, rav::RayTracer::shadingProgram;
-static int screenArea;
-static Ray* rays;
-
 GLint rav::RayTracer::generateRays()
 {
 
@@ -328,7 +322,7 @@ GLint rav::RayTracer::collisionPass(int depth_level)
 	glUniform1i(depthLevelLoc, depth_level);
 
 	//Dispatch compute shader to process
-	glDispatchCompute(width * height * (depthLevel + 1) / 256, 12, 1);
+	glDispatchCompute(width * height * (depthLevel + 1) / 256, objData->triangleCount, 1);
 
 	//Avoid concurrent memory access!
 	glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
@@ -376,6 +370,10 @@ GLint rav::RayTracer::shadingPass(int depth_level)
 	glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT | GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
 
 	return 0;
+}
+
+rav::RayTracer::RayTracer()
+{
 }
 
 GLint rav::RayTracer::Setup(int width, int height, int depth)
@@ -472,7 +470,7 @@ GLint rav::RayTracer::Setup(int width, int height, int depth)
 		}
 #pragma endregion
 
-		ObjectData *objData = RayFileLoader::LoadObject("./data/mesh/cube.obj");
+		objData = RayFileLoader::LoadObject("./data/mesh/sphere.obj");
 
 #pragma region Vertex
 		{

@@ -9,6 +9,7 @@ using namespace rav;
 
 App::App()
 {
+
 }
 
 
@@ -103,7 +104,7 @@ int App::Initialize(cint &width, cint &height, str name, bool fullscreen, bool v
 	glClearColor(0.0f, 0.4509803921568627f, 0.8980392156862745f, 1.0f);
 
 	//Initialize Raytracer
-	RayTracer::Setup(width, height, 1);
+	raytracer.Setup(width, height, 1);
 
 	//Return no error message
 	return 0;
@@ -134,7 +135,7 @@ int App::Run()
 		_update_fps_counter(window);
 
 		//===============COMPUT RAYTRACING HERE====================
-		GLint raytracePreview = RayTracer::Compute();
+		GLint raytracePreview = raytracer.Compute();
 		//===============COMPUT RAYTRACING HERE====================
 
 #pragma region PostProcess
