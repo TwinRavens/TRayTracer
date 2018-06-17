@@ -33,7 +33,7 @@ ObjectData* RayFileLoader::InterpretMesh(aiMesh * mesh)
 	for (int i = 0; i < count; i++)
 	{
 
-		data->triangles[i] = Triangle{  mesh->mFaces[i].mIndices[0], mesh->mFaces[i].mIndices[1], mesh->mFaces[i].mIndices[2], 0,
+		data->triangles[i] = Triangle{ mesh->mFaces[i].mIndices[0], mesh->mFaces[i].mIndices[1], mesh->mFaces[i].mIndices[2], 0,
 										mesh->mFaces[i].mIndices[0], mesh->mFaces[i].mIndices[1], mesh->mFaces[i].mIndices[2], 0 };
 	}
 
@@ -69,7 +69,9 @@ ObjectData* RayFileLoader::LoadObject(const std::string& path)
 
 	if (scene->mNumMeshes == 1)
 	{
-		return InterpretMesh(scene->mMeshes[0]);
+		ObjectData* obj = InterpretMesh(scene->mMeshes[0]);
+		rvDebug.Log("Loaded " + path + " sucessfully. It has " + std::to_string(obj->verticesCount) + " vertices and " + std::to_string(obj->triangleCount) + " triangles");
+		return obj;
 	}
 	else
 	{
@@ -102,7 +104,8 @@ ObjectData* RayFileLoader::LoadObject(const std::string& path)
 			}
 			delete temp[i];
 		}
-				
+
+		rvDebug.Log("Loaded " + path + " sucessfully. It has " + std::to_string(finalObject->verticesCount) + " vertices and " + std::to_string(finalObject->triangleCount) + " triangles");
 
 		return finalObject;
 	}

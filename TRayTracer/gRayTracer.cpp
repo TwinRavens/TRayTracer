@@ -470,7 +470,7 @@ GLint rav::RayTracer::Setup(int width, int height, int depth)
 		}
 #pragma endregion
 
-		objData = RayFileLoader::LoadObject("./data/mesh/sphere.obj");
+		objData = RayFileLoader::LoadObject("./data/mesh/cube.obj");
 
 #pragma region Vertex
 		{
@@ -602,7 +602,7 @@ GLint rav::RayTracer::Setup(int width, int height, int depth)
 				//	red		green	blue	alpha	spec	diff	ambient	coef	shinness	refrac_index	reflection
 				{	1,		0,		0,		1.0,	0.6,	0.8,	0.1,			50,			1.0,			0.0,	},
 				{	0,		0.8,	0,		1.0,	0.6,	0.8,	0.1,			50,			1.0,			0.0,	},
-				{	1,		0,		0.7,	1.0,	0.6,	0.8,	0.1,			50,			1.0,			0.3,	},
+				{	1,		0,		0.7,	1.0,	0.6,	0.8,	0.1,			50,			0.0,			0.3,	},
 				{	0.7,	0.3,	0,		0.8,	0.6,	0.8,	0.1,			50,			1.0,			0.2,	},
 				{	1,		0,		1,		1.0,	0.6,	0.8,	0.1,			50,			1.0,			0.6,	},
 				{	0,		1,		1,		0.6,	0.9,	0.8,	0.1,			50,			1.05,			0.0,	},
