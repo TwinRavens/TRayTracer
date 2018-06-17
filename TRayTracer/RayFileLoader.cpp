@@ -20,12 +20,12 @@ ObjectData* RayFileLoader::InterpretMesh(aiMesh * mesh)
 	ObjectData *data = new ObjectData();
 	// load vertices
 	int count = data->verticesCount = mesh->mNumVertices;
-	data->vertices = new glm::vec3[count];
-	data->normal = new glm::vec3[count];
+	data->vertices = new glm::vec4[count];
+	data->normal = new glm::vec4[count];
 	for (int i = 0; i < count; i++)
 	{
-		data->vertices[i] = glm::vec3(mesh->mVertices[i].x, mesh->mVertices[i].y, mesh->mVertices[i].z);
-		data->normal[i] = glm::vec3(mesh->mNormals[i].x, mesh->mNormals[i].y, mesh->mNormals[i].z);
+		data->vertices[i] = glm::vec4(mesh->mVertices[i].x, mesh->mVertices[i].y, mesh->mVertices[i].z, 0);
+		data->normal[i] = glm::vec4(mesh->mNormals[i].x, mesh->mNormals[i].y, mesh->mNormals[i].z, 0);
 	}
 
 	count = data->triangleCount = mesh->mNumFaces;
@@ -84,8 +84,8 @@ ObjectData* RayFileLoader::LoadObject(const std::string& path)
 			finalObject->triangleCount += temp[i]->triangleCount;
 		}
 
-		finalObject->vertices = new glm::vec3[finalObject->verticesCount];
-		finalObject->normal = new glm::vec3[finalObject->verticesCount];
+		finalObject->vertices = new glm::vec4[finalObject->verticesCount];
+		finalObject->normal = new glm::vec4[finalObject->verticesCount];
 		finalObject->triangles = new Triangle[finalObject->triangleCount];
 
 		//get all of the objectData together

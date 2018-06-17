@@ -55,7 +55,7 @@ layout (std140) buffer nBuffer
 
 struct Triangle
 {
-	uvec4 vId;
+	uvec4 vIdmId;
 	uvec4 nId;
 };
 
@@ -105,7 +105,7 @@ void main()
 		const float fov = 33.0; //get this from options
 		const float fovScale = tan(radians(fov * 0.5));
 		const ivec2 screen_coord = ivec2(mod(rayId, workGroupWidth), rayId/workGroupWidth);
-		const vec4 origin = { 0, 0, 20, 1 };
+		const vec4 origin = { 0, 0, 10, 1 };
 
 		const float x = (2.0 * (screen_coord.x + 0.5) / screenSize.x - 1.0) * aspectRatio * fovScale;
 		const float y = (1.0 - 2.0 * (screen_coord.y + 0.5) / screenSize.y) * fovScale;
@@ -120,9 +120,9 @@ void main()
 	}
 
 	//Get triangle vertices
-	vec3 v1 = vertices[triangles[triangleId].vId[0]].xyz; //First Vertex
-	vec3 v2 = vertices[triangles[triangleId].vId[1]].xyz; //Second Vertex
-	vec3 v3 = vertices[triangles[triangleId].vId[2]].xyz; //Third Vertex
+	vec3 v1 = vertices[triangles[triangleId].vIdmId[0]].xyz; //First Vertex
+	vec3 v2 = vertices[triangles[triangleId].vIdmId[1]].xyz; //Second Vertex
+	vec3 v3 = vertices[triangles[triangleId].vIdmId[2]].xyz; //Third Vertex
 
 	//Get triangle side vectors
 	vec3 tu = v2-v1;	//Triangle U component
@@ -153,15 +153,15 @@ void main()
 
 		//TODO: Interpolate normals
 		//Get triangle vertices
-		vec3 n1 = normals[triangles[triangleId].nId[0]].xyz; //First Vertex
-		vec3 n2 = normals[triangles[triangleId].nId[1]].xyz; //Second Vertex
-		vec3 n3 = normals[triangles[triangleId].nId[2]].xyz; //Third Vertex
+		vec3 n1 = normals[triangles[triangleId].vIdmId[0]].xyz; //First Vertex
+		vec3 n2 = normals[triangles[triangleId].vIdmId[1]].xyz; //Second Vertex
+		vec3 n3 = normals[triangles[triangleId].vIdmId[2]].xyz; //Third Vertex
 		vec3 normal = n1 * (1.0f-(u+v)) + n2 * u + n3 * v;
 		normal = normalize(normal);
 
 		if(hits[rayId].rayDir.w > t || depthLevel == 0)
 		{
-			hits[rayId] = RayHit(vec4(hit, rays[rayId].origAndWght.w), vec4(normal, 0), vec4(rayDir, t), ivec4(pixelCoords.xy, triangleId, 1));
+			hits[rayId] = RayHit(vec4(hit, rays[rayId].origAndWght.w), vec4(normal, 0), vec4(rayDir, t), ivec4(pixelCoords.xy, triangles[triangleId].vIdmId.w, 1));
 		}
 	}
 }

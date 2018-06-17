@@ -17,6 +17,7 @@
 #include "Primitives.h"
 #include "Material.h"
 #include "Light.h"
+#include "RayFileLoader.h"
 
 //Defines
 #define MAX_DEPTH 10
