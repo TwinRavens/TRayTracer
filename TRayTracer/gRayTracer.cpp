@@ -322,13 +322,13 @@ GLint rav::RayTracer::collisionPass(int depth_level)
 	glUniform1i(depthLevelLoc, depth_level);
 
 	GLint cameraRotLoc = 5;
-	glUniformMatrix3fv(cameraRotLoc, 1, GL_FALSE, &cameraRot[0][0]);
+	glUniformMatrix4fv(cameraRotLoc, 1, GL_FALSE, &cameraRot[0][0]);
 
 	GLint cameraPosLoc = 6;
 	glUniform4f(cameraPosLoc, cameraPos.x, cameraPos.y, cameraPos.z, cameraPos.w);
 
 	//Dispatch compute shader to process
-	glDispatchCompute(width * height * (depth_level + 1) / 256, objData->triangleCount, 1);
+	glDispatchCompute(width * height * (depth_level + 1) / 128, objData->triangleCount, 1);
 
 	//Avoid concurrent memory access!
 	glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
@@ -475,7 +475,7 @@ GLint rav::RayTracer::Setup(int width, int height, int depth)
 
 		}
 		#pragma endregion
-		objData = RayFileLoader::LoadObject("./data/mesh/cube.obj");
+		objData = RayFileLoader::LoadObject("./data/mesh/testCube.obj");
 
 		#pragma region Vertex
 		{

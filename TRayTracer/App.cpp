@@ -133,32 +133,59 @@ int App::Run()
 	//	rvDebug.Log("Failed to load texture", RV_ERROR_MESSAGE);
 	//}
 
+	//First person controllers
+	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+	double lastMouseX = 0, lastMouseY = 0;
+	glfwGetCursorPos(window, &lastMouseX, &lastMouseY);
+	glm::vec3 position = glm::vec3(0, 0, -20);
+	float horAngle = 270, verAngle = 0;
+
 	while (!glfwWindowShouldClose(window))
 	{
 		_update_fps_counter(window);
 
 		#pragma region Inputs
 
-		//double mouseX, mouseY;
-		//glfwGetCursorPos(window, &mouseX, &mouseY);
-		//glm::rotate()
+		//Delta Mouse Positions
+		double mouseX, mouseY;
+		glfwGetCursorPos(window, &mouseX, &mouseY);
+		float deltaX = mouseX - lastMouseX;
+		float deltaY = mouseY - lastMouseY;
+		lastMouseX = mouseX;
+		lastMouseY = mouseY;
 
+		//Calculate look rotation update
+		horAngle -= 0.04f * deltaX;
+		verAngle -= 0.04f * deltaY;
 
+		glm::vec3 forward = glm::vec3(glm::cos(glm::radians(horAngle)), 
+									  glm::sin(glm::radians(verAngle)),
+									  glm::sin(glm::radians(horAngle)));
+		rvDebug.Log(to_string(forward.x) + ", " + to_string(forward.y) + ", " + to_string(forward.z));
+		glm::quat lookRot;
+		
+		raytracer.cameraRot = glm::lookAt(glm::vec3(raytracer.cameraPos), 
+										  glm::vec3(raytracer.cameraPos)+forward,
+										  glm::vec3(0, 1, 0));
+
+		//Calculate translation
+		glm::vec4 translation = glm::vec4(0);
 		if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-			raytracer.cameraPos.z += 0.2;
+			translation.z -= 0.2;
 
 		if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-			raytracer.cameraPos.x -= 0.2;
+			translation.x -= 0.2;
 
 		if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-			raytracer.cameraPos.z -= 0.2;
+			translation.z += 0.2;
 
 		if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-			raytracer.cameraPos.x += 0.2;
+			translation.x += 0.2;
 
-		//Camera Matrices
-		glm::mat4 cameraRot;
-		glm::vec4 cameraPos;
+		raytracer.cameraPos += translation;
+
+		//if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)
+			//raytracer.cameraRot = glm::rotate(raytracer.cameraRot, -0.03f, glm::vec3(0.0f, 1.0f, 0.0f));
 
 		#pragma endregion
 

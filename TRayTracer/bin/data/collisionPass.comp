@@ -1,13 +1,13 @@
 #version 430
 
-layout(local_size_x = 256, local_size_y = 1, local_size_z = 1) in;
+layout(local_size_x = 128, local_size_y = 1, local_size_z = 1) in;
 
 layout(location=0) uniform float time;
 layout(location=1) uniform int spheresCount;
 layout(location=2) uniform int workGroupWidth;
 layout(location=3) uniform int workGroupHeight;
 layout(location=4) uniform int depthLevel;
-layout(location=5) uniform mat3 cameraRot;
+layout(location=5) uniform mat4 cameraRot;
 layout(location=6) uniform vec4 cameraPos;
 
 struct Ray
@@ -107,17 +107,16 @@ void main()
 		const float fov = 33.0; //get this from options
 		const float fovScale = tan(radians(fov * 0.5));
 		const ivec2 screen_coord = ivec2(mod(rayId, workGroupWidth), rayId/workGroupWidth);
-		vec4 origin = { 0, 0, 20, 1 };
+		vec4 origin = { 0, 0, 0, 1 };
 		origin += cameraPos;
 
 		const float x = (2.0 * (screen_coord.x + 0.5) / screenSize.x - 1.0) * aspectRatio * fovScale;
 		const float y = (1.0 - 2.0 * (screen_coord.y + 0.5) / screenSize.y) * fovScale;
-		vec3 dir = vec3( x, y, -1.0f );
-		dir = normalize(dir);
+		vec4 dir = vec4(normalize(vec3( x, y, -1.0f )), 0);
 
 		//Create ray in memory
 		rays[rayId].origAndWght = origin;
-		rays[rayId].dir = vec4(dir, 0);
+		rays[rayId].dir = cameraRot*dir;
 		rays[rayId].pixelCoords = screen_coord.xyxy;
 
 	}
@@ -141,7 +140,7 @@ void main()
 	vec3 tr = rayOrigin - v1;
 
 	//Determinant for inverse matrix
-	float invdet = 1.0/abs(dot(tu, cross(tv, rayDir)));
+	float invdet = 1.0/dot(tu, cross(tv, rayDir));
 
 	//Solve component parameters
 	float u = dot(cross(tv, rayDir) * invdet, tr);
@@ -151,20 +150,20 @@ void main()
 	//Use 'u' and 'v' to check for triangle boundaries
 	if (u > 0 && v > 0 && (u+v) <= 1 && t >= 0)
 	{
-		//TODO: Check for closest hit
-		vec3 hit = rayOrigin + rayDir * t;
-
-		//TODO: Interpolate normals
-		//Get triangle vertices
-		vec3 n1 = normals[triangles[triangleId].vIdmId[0]].xyz; //First Vertex
-		vec3 n2 = normals[triangles[triangleId].vIdmId[1]].xyz; //Second Vertex
-		vec3 n3 = normals[triangles[triangleId].vIdmId[2]].xyz; //Third Vertex
-		vec3 normal = n1 * (1.0f-(u+v)) + n2 * u + n3 * v;
-		normal = normalize(normal);
-
-		
+		//Check for closest hit
 		if(hits[rayId].rayDir.w > t)
 		{
+
+			//Get triangle vertices
+			vec3 n1 = normals[triangles[triangleId].vIdmId[0]].xyz; //First Vertex
+			vec3 n2 = normals[triangles[triangleId].vIdmId[1]].xyz; //Second Vertex
+			vec3 n3 = normals[triangles[triangleId].vIdmId[2]].xyz; //Third Vertex
+			vec3 normal = n1 * (1.0f-(u+v)) + n2 * u + n3 * v;
+			normal = normalize(normal);
+			//normal = vec3(0, 0, 1);
+
+			//Calculate hit point
+			vec3 hit = rayOrigin + rayDir * t;
 			hits[rayId] = RayHit(vec4(hit, rays[rayId].origAndWght.w), vec4(normal, 0), vec4(rayDir, t), ivec4(pixelCoords.xy, triangles[triangleId].vIdmId.w, 1));
 		}
 	}

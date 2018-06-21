@@ -64,7 +64,7 @@ namespace rav
 		//Renders a full image with given trace depth
 		GLint Compute();
 
-		glm::mat3 cameraRot;
+		glm::mat4 cameraRot;
 		glm::vec4 cameraPos;
 
 	};
