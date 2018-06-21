@@ -159,7 +159,8 @@ void main()
 		vec3 normal = n1 * (1.0f-(u+v)) + n2 * u + n3 * v;
 		normal = normalize(normal);
 
-		if(hits[rayId].rayDir.w > t || depthLevel == 0)
+		
+		if(hits[rayId].rayDir.w > t)
 		{
 			hits[rayId] = RayHit(vec4(hit, rays[rayId].origAndWght.w), vec4(normal, 0), vec4(rayDir, t), ivec4(pixelCoords.xy, triangles[triangleId].vIdmId.w, 1));
 		}

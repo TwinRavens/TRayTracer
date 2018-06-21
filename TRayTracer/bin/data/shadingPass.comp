@@ -113,6 +113,9 @@ void main() {
 
 	//Get object id from hit
 	const int objId = hits[hitId].pixelCoordsObjIdType.z;
+	
+	//"clear" depth buffer
+	hits[hitId].rayDir.w = 1000000.0f;
 
 	const float rayContribution = hits[hitId].hitAndWeight.w;
 
