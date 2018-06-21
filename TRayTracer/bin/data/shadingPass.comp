@@ -146,6 +146,10 @@ void main() {
 		rays[hitId*2+1] = Ray(vec4(0), vec4(0), pixelCoords.xyxy);
 	}
 
+	//"clear" hit id and depth
+	hits[hitId].pixelCoordsObjIdType.z = -1;
+	hits[hitId].rayDir.w = 1000000.0f;
+
 	//Get last pass pixel (only if this is not the first pass)
 	vec4 lastPixel = imageLoad(img_output, pixelCoords) * step(1, depthLevel);
 
@@ -153,8 +157,5 @@ void main() {
 	vec4 outPixel = lastPixel + pixel * rayContribution;
 
 	imageStore(img_output, pixelCoords, outPixel);
-
-	//"clear" hit
-	hits[hitId].pixelCoordsObjIdType.z = -1;
 
 }

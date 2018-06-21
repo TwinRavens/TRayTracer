@@ -370,7 +370,7 @@ GLint rav::RayTracer::shadingPass(int depth_level)
 	glUniform4f(ambientColourLoc, 1.0f, 1.0f, 1.0f, 1.0f);
 
 	//Dispatch compute shader to process
-	glDispatchCompute(width * height / 32, (depthLevel + 1), 1);
+	glDispatchCompute(width * height / 32, (depth_level + 1), 1);
 
 	//Avoid concurrent memory access!
 	glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT | GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
@@ -475,6 +475,7 @@ GLint rav::RayTracer::Setup(int width, int height, int depth)
 
 		}
 		#pragma endregion
+		objData = RayFileLoader::LoadObject("./data/mesh/cube.obj");
 
 		#pragma region Vertex
 		{

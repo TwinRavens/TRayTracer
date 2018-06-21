@@ -145,16 +145,16 @@ int App::Run()
 
 
 		if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-			RayTracer::cameraPos.z += 0.2;
+			raytracer.cameraPos.z += 0.2;
 
 		if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-			RayTracer::cameraPos.x -= 0.2;
+			raytracer.cameraPos.x -= 0.2;
 
 		if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-			RayTracer::cameraPos.z -= 0.2;
+			raytracer.cameraPos.z -= 0.2;
 
 		if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-			RayTracer::cameraPos.x += 0.2;
+			raytracer.cameraPos.x += 0.2;
 
 		//Camera Matrices
 		glm::mat4 cameraRot;
