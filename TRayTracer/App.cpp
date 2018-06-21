@@ -4,6 +4,9 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
+
 //Using Ravine namespace
 using namespace rav;
 
@@ -134,15 +137,40 @@ int App::Run()
 	{
 		_update_fps_counter(window);
 
+		#pragma region Inputs
+
+		//double mouseX, mouseY;
+		//glfwGetCursorPos(window, &mouseX, &mouseY);
+		//glm::rotate()
+
+
+		if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+			RayTracer::cameraPos.z += 0.2;
+
+		if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+			RayTracer::cameraPos.x -= 0.2;
+
+		if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+			RayTracer::cameraPos.z -= 0.2;
+
+		if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+			RayTracer::cameraPos.x += 0.2;
+
+		//Camera Matrices
+		glm::mat4 cameraRot;
+		glm::vec4 cameraPos;
+
+		#pragma endregion
+
 		//===============COMPUT RAYTRACING HERE====================
 		GLint raytracePreview = raytracer.Compute();
 		//===============COMPUT RAYTRACING HERE====================
 
-#pragma region PostProcess
+		#pragma region PostProcess
 		GLuint idPostProcess = postProcessPipeline->Process(raytracePreview);
-#pragma endregion
+		#pragma endregion
 
-#pragma region Draw Raytracer Output
+		#pragma region Draw Raytracer Output
 
 		//Clear back color and depth buffer
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -160,7 +188,7 @@ int App::Run()
 		//Draw given VBO
 		screenQuadVBO->Draw();
 
-#pragma endregion
+		#pragma endregion
 
 		//Swap front and back buffers
 		glfwSwapBuffers(window);
@@ -209,7 +237,7 @@ void App::CreateScreenQuad() {
 
 	screenQuadVBO = new VertexBuffer();
 	screenQuadVAO = new VertexArray();
-	
+
 	GLint vp_loc = rvGetAttributeLoc(defaultPrg, "vertex_position");	//Get attribute location (after linking!)
 	GLint vc_loc = rvGetAttributeLoc(defaultPrg, "vertex_coords");		//Get attribute location (after linking!)
 
@@ -223,16 +251,6 @@ void App::CreateScreenQuad() {
 		 1.0f,  1.0f,  0.0f,	1.0f,  1.0f  //Top-right
 	};
 
-
-	//Identity Matrix
-	float matrix[] = {
-		1, 0, 0, 0,
-		0, 1, 0, 0,
-		0, 0, 1, 0,
-		0, 0, 0, 1
-	};
-
-
 	//Add a description to it's buffer
 	screenQuadVBO->AddBufferDescriptor({		//Vertex Position Attribute
 		vp_loc,						//Location ID
@@ -241,7 +259,7 @@ void App::CreateScreenQuad() {
 		false,						//Not normalized
 		sizeof(float) * 5,			//Size of buffer block per vertex (3 for XYZ and 2 for UV)
 		(void*)(0 * sizeof(float))	//Stride of 0 bytes (starts at the beginning of the block)
-		});
+									   });
 	screenQuadVBO->AddBufferDescriptor({		//Vertex UV Attribute
 		vc_loc,						//Location ID
 		2,							//Size of attribute (2 = UV)
@@ -249,7 +267,7 @@ void App::CreateScreenQuad() {
 		false,						//Not normalized
 		sizeof(float) * 5,			//Size of buffer block per vertex (3 for XYZ and 2 for UV)
 		(void*)(3 * sizeof(float))	//Stride of 3 bytes (starts 3 bytes away from the beginning of the block)
-		});
+									   });
 
 	//Copy data to VertexBuffer Object
 	screenQuadVBO->Fill(sizeof(points), points);
