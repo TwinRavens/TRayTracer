@@ -3,6 +3,8 @@
 int rav::RayTracer::height, rav::RayTracer::width, rav::RayTracer::depthLevel, rav::RayTracer::raysSize;
 GLuint rav::RayTracer::screenBuffer, rav::RayTracer::raysBuffer, rav::RayTracer::rayHitsBuffer;
 GLint rav::RayTracer::collisionProgram, rav::RayTracer::shadingProgram;
+glm::mat3 rav::RayTracer::cameraRot;
+glm::vec4 rav::RayTracer::cameraPos;
 static int screenArea;
 static Ray* rays;
 
@@ -327,11 +329,17 @@ GLint rav::RayTracer::collisionPass(int depth_level)
 	GLint depthLevelLoc = 4;
 	glUniform1i(depthLevelLoc, depth_level);
 
+	GLint cameraRotLoc = 5;
+	glUniformMatrix3fv(cameraRotLoc, 1, GL_FALSE, &cameraRot[0][0]);
+
+	GLint cameraPosLoc = 6;
+	glUniform4f(cameraPosLoc, cameraPos.x, cameraPos.y, cameraPos.z, cameraPos.w);
+
 	//Dispatch compute shader to process
-	glDispatchCompute(width * height * (depthLevel + 1) / 256, 2, 1);
+	glDispatchCompute(width * height * (depth_level + 1) / 256, 2, 1);
 
 	//Avoid concurrent memory access!
-	glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+	glMemoryBarrier(GL_ALL_BARRIER_BITS);
 
 	return 0;
 }
@@ -370,7 +378,7 @@ GLint rav::RayTracer::shadingPass(int depth_level)
 	glUniform4f(ambientColourLoc, 1.0f, 1.0f, 1.0f, 1.0f);
 
 	//Dispatch compute shader to process
-	glDispatchCompute(width * height / 32, (depthLevel + 1), 1);
+	glDispatchCompute(width * height / 32, (depth_level + 1), 1);
 
 	//Avoid concurrent memory access!
 	glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT | GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
