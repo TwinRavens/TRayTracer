@@ -137,8 +137,8 @@ int App::Run()
 	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 	double lastMouseX = 0, lastMouseY = 0;
 	glfwGetCursorPos(window, &lastMouseX, &lastMouseY);
-	glm::vec3 position = glm::vec3(0, 0, -20);
-	float horAngle = 270, verAngle = 0;
+	raytracer.cameraPos = glm::vec4(0, 0, 10, 1);
+	float horAngle = 0, verAngle = 0;
 
 	while (!glfwWindowShouldClose(window))
 	{
@@ -155,18 +155,17 @@ int App::Run()
 		lastMouseY = mouseY;
 
 		//Calculate look rotation update
-		horAngle -= 0.04f * deltaX;
-		verAngle -= 0.04f * deltaY;
+		horAngle -= 0.06f * deltaX;
+		verAngle += 0.06f * deltaY;
 
-		glm::vec3 forward = glm::vec3(glm::cos(glm::radians(horAngle)), 
-									  glm::sin(glm::radians(verAngle)),
-									  glm::sin(glm::radians(horAngle)));
-		rvDebug.Log(to_string(forward.x) + ", " + to_string(forward.y) + ", " + to_string(forward.z));
-		glm::quat lookRot;
-		
-		raytracer.cameraRot = glm::lookAt(glm::vec3(raytracer.cameraPos), 
-										  glm::vec3(raytracer.cameraPos)+forward,
-										  glm::vec3(0, 1, 0));
+		//Limit vertical angle
+		verAngle = max(min(90, verAngle), -90);
+
+		//Define rotation quaternion starting form look rotation
+		glm::quat lookRot = glm::vec3(0, 0, 0);
+		lookRot = glm::rotate(lookRot, glm::radians(horAngle), glm::vec3(0, 1, 0));
+		lookRot = glm::rotate(lookRot, glm::radians(verAngle), glm::vec3(1, 0, 0));
+		raytracer.cameraRot = glm::mat4_cast(lookRot);
 
 		//Calculate translation
 		glm::vec4 translation = glm::vec4(0);
@@ -181,11 +180,7 @@ int App::Run()
 
 		if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
 			translation.x += 0.2;
-
-		raytracer.cameraPos += translation;
-
-		//if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)
-			//raytracer.cameraRot = glm::rotate(raytracer.cameraRot, -0.03f, glm::vec3(0.0f, 1.0f, 0.0f));
+		raytracer.cameraPos += lookRot * translation;
 
 		#pragma endregion
 

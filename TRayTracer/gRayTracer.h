@@ -65,7 +65,7 @@ namespace rav
 		GLint Compute();
 
 		glm::mat4 cameraRot;
-		glm::vec4 cameraPos;
+		glm::vec4 cameraPos = glm::vec4(0, 0, 10, 1);
 
 	};
 
