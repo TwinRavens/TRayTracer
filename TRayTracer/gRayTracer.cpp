@@ -328,7 +328,7 @@ GLint rav::RayTracer::collisionPass(int depth_level)
 	glUniform4f(cameraPosLoc, cameraPos.x, cameraPos.y, cameraPos.z, cameraPos.w);
 
 	//Dispatch compute shader to process
-	glDispatchCompute(width * height * (depth_level + 1) / 128, objData->triangleCount, 1);
+	glDispatchCompute(width * height * (depth_level + 1) / 1024, objData->triangleCount, 1);
 
 	//Avoid concurrent memory access!
 	glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
@@ -370,7 +370,7 @@ GLint rav::RayTracer::shadingPass(int depth_level)
 	glUniform4f(ambientColourLoc, 1.0f, 1.0f, 1.0f, 1.0f);
 
 	//Dispatch compute shader to process
-	glDispatchCompute(width * height / 32, (depth_level + 1), 1);
+	glDispatchCompute(width * height / 1024, (depth_level + 1), 1);
 
 	//Avoid concurrent memory access!
 	glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT | GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
