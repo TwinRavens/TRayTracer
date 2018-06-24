@@ -475,7 +475,7 @@ GLint rav::RayTracer::Setup(int width, int height, int depth)
 
 		}
 		#pragma endregion
-		objData = RayFileLoader::LoadObject("./data/mesh/test.fbx");
+		objData = RayFileLoader::LoadObject("./data/mesh/test3.obj");
 
 		#pragma region Vertex
 		{
@@ -605,7 +605,7 @@ GLint rav::RayTracer::Setup(int width, int height, int depth)
 			Material materials[] = {
 				//	red		green	blue	alpha	spec	diff	ambient	coef	shinness	refrac_index	reflection
 				{	1,		0,		0,		1.0,	0.6,	0.8,	0.1,			50,			1.0,			0.0,	},
-				{	0,		0.8,	0,		1.0,	0.6,	0.8,	0.1,			50,			1.0,			0.0,	},
+				{	0.8,	0.3,	0,		1.0,	0.6,	0.8,	0.1,			50,			1.0,			0.8,	},
 				{	1,		0,		0.7,	1.0,	0.6,	0.8,	0.1,			50,			1.0,			0.3,	},
 				{	0.7,	0.3,	0,		0.8,	0.6,	0.8,	0.1,			50,			1.0,			0.2,	},
 				{	1,		0,		1,		1.0,	0.6,	0.8,	0.1,			50,			1.0,			0.6,	},
@@ -647,9 +647,8 @@ GLint rav::RayTracer::Setup(int width, int height, int depth)
 
 			Light lights[] = {
 				//x		y		z	count	r		g		b		a
-				{5.0,	0.0,	2.0,	3,	1.0,	0.0,	0.0,	1.0 },
-				{0.0,	-2.0,	0.0,	3,	0.0,	1.0,	0.0,	1.0},
-				{-5.0,	1.0,	-1.0,	3,	1.0,	0.0,	1.0,	1.0 },
+				{5.0,	0.0,	2.0,	3,	1.0,	1.0,	1.0,	1.0 },
+				{-5.0,	1.0,	-1.0,	3,	1.0,	1.0,	1.0,	1.0 },
 			};
 
 			//Copy data to OpenGL

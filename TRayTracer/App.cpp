@@ -372,7 +372,7 @@ inline void rav::App::CreatePostProcess()
 
 	//decorate the post-process, adding more steps
 	postProcessPipeline = new PostProcessDecorator(postProcessPipeline, default_vs, sobel_outline_fs, width, height);
-	postProcessPipeline = new PostProcessDecoratorTexturized(postProcessPipeline, noise, default_vs, cray_fs, width, height);
+	//postProcessPipeline = new PostProcessDecoratorTexturized(postProcessPipeline, noise, default_vs, cray_fs, width, height);
 	//postProcessPipeline = new PostProcessDecorator(postProcessPipeline, default_vs, blur_fs, width, height);
 
 
