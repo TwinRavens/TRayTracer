@@ -7,6 +7,7 @@ in vec2 v_coords;
 
 uniform sampler2D tex_2d;
 
+float threshold = 1;
 void main()
 {
 	vec4 top         = texture(tex_2d, vec2(v_coords.x, v_coords.y + 1.0 / 200.0));
@@ -20,5 +21,8 @@ void main()
 	vec4 sx = -topLeft - 2 * left - bottomLeft + topRight   + 2 * right  + bottomRight;
 	vec4 sy = -topLeft - 2 * top  - topRight   + bottomLeft + 2 * bottom + bottomRight;
 	vec4 sobel = sqrt(sx * sx + sy * sy);
-	frag_color = texture(tex_2d, vec2(v_coords.x, v_coords.y)) * (1 - sobel);
+
+	frag_color = texture(tex_2d, vec2(v_coords.x, v_coords.y)) * ((step(sobel.x, threshold) * step(sobel.y, threshold) * step(sobel.z, threshold)));
+
+	//frag_color = texture(tex_2d, vec2(v_coords.x, v_coords.y)) * (1 - sobel);
 }
