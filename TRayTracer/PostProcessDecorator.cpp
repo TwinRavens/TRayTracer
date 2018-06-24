@@ -34,8 +34,13 @@ PostProcessDecorator::~PostProcessDecorator()
 	delete this->postProcess;
 }
 
+void PostProcessDecorator::PreProcess()
+{
+}
+
 GLuint PostProcessDecorator::Process(GLuint input)
 {
+	PreProcess();
 	return PostProcess::Process(postProcess->Process(input));
 }
 

@@ -11,7 +11,7 @@ public:
 	PostProcessDecorator(PostProcess *process, GLuint programID, int width, int height);
 	PostProcessDecorator(PostProcess *process, GLuint programID, GLuint outputBuffer);
 	~PostProcessDecorator();
-
+	virtual void PreProcess();
 	GLuint Process(GLuint input);
 
 };

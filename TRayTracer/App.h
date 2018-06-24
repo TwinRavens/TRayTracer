@@ -24,7 +24,7 @@
 #include "Ray.h"
 #include "gRayTracer.h"
 #include "Primitives.h"
-#include "PostProcessDecorator.h" 
+#include "PostProcess.h" 
 
 //Typedefs
 typedef const int cint;
@@ -55,6 +55,9 @@ namespace rav
 		void CreateDefaultProgram();
 		void CreateScreenQuad();
 		void CreatePostProcess();
+
+
+		GLuint LoadTexture(const char * path);
 	public:
 		//GLFW error callback
 		static void error_callback(int error, const char* description)

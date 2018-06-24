@@ -7,6 +7,10 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
+
+#include "PostProcessDecoratorTexturized.h" 
+
+
 //Using Ravine namespace
 using namespace rav;
 
@@ -144,7 +148,7 @@ int App::Run()
 	{
 		_update_fps_counter(window);
 
-		#pragma region Inputs
+#pragma region Inputs
 
 		//Delta Mouse Positions
 		double mouseX, mouseY;
@@ -182,17 +186,17 @@ int App::Run()
 			translation.x += 0.2;
 		raytracer.cameraPos += lookRot * translation;
 
-		#pragma endregion
+#pragma endregion
 
 		//===============COMPUT RAYTRACING HERE====================
 		GLint raytracePreview = raytracer.Compute();
 		//===============COMPUT RAYTRACING HERE====================
 
-		#pragma region PostProcess
+#pragma region PostProcess
 		GLuint idPostProcess = postProcessPipeline->Process(raytracePreview);
-		#pragma endregion
+#pragma endregion
 
-		#pragma region Draw Raytracer Output
+#pragma region Draw Raytracer Output
 
 		//Clear back color and depth buffer
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -210,7 +214,7 @@ int App::Run()
 		//Draw given VBO
 		screenQuadVBO->Draw();
 
-		#pragma endregion
+#pragma endregion
 
 		//Swap front and back buffers
 		glfwSwapBuffers(window);
@@ -281,7 +285,7 @@ void App::CreateScreenQuad() {
 		false,						//Not normalized
 		sizeof(float) * 5,			//Size of buffer block per vertex (3 for XYZ and 2 for UV)
 		(void*)(0 * sizeof(float))	//Stride of 0 bytes (starts at the beginning of the block)
-									   });
+		});
 	screenQuadVBO->AddBufferDescriptor({		//Vertex UV Attribute
 		vc_loc,						//Location ID
 		2,							//Size of attribute (2 = UV)
@@ -289,7 +293,7 @@ void App::CreateScreenQuad() {
 		false,						//Not normalized
 		sizeof(float) * 5,			//Size of buffer block per vertex (3 for XYZ and 2 for UV)
 		(void*)(3 * sizeof(float))	//Stride of 3 bytes (starts 3 bytes away from the beginning of the block)
-									   });
+		});
 
 	//Copy data to VertexBuffer Object
 	screenQuadVBO->Fill(sizeof(points), points);
@@ -302,6 +306,38 @@ void App::CreateScreenQuad() {
 
 }
 
+
+GLuint rav::App::LoadTexture(const char* path)
+{
+	GLuint textureID;
+	glGenTextures(1, &textureID);
+
+	glBindTexture(GL_TEXTURE_2D, textureID);
+
+
+	int width, height, nrChannels;
+	unsigned char *data = stbi_load(path, &width, &height, &nrChannels, 0);
+	if (data)
+	{
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+		glGenerateMipmap(GL_TEXTURE_2D);
+		stbi_image_free(data);
+	}
+	else
+	{
+		rvDebug.Log(string("failed to load texture @ ", path), RV_ERROR_MESSAGE);
+	}
+
+	return textureID;
+}
+
+GLuint LoadShader(const char* path, const char *name)
+{
+	char* file;
+	rvLoadFile(path, file, true);
+	return rvCreateShader(name, file, RV_FRAGMENT_SHADER);
+}
+
 inline void rav::App::CreatePostProcess()
 {
 	int width, height;
@@ -310,23 +346,33 @@ inline void rav::App::CreatePostProcess()
 	GLuint default_vs = rvGetShader("vertex_uv_vs");
 	GLuint default_fs = rvGetShader("fragment_base_vs");
 
-	char* blur_file;
-	rvLoadFile("./data/blurPass.frag", blur_file, true);
-	GLuint blur_fs = rvCreateShader("fragment_blur", blur_file, RV_FRAGMENT_SHADER);
 
-	char* sobel_file;
-	rvLoadFile("./data/fragment_sobel.frag", sobel_file, true);
-	GLuint sobel_fs = rvCreateShader("fragment_sobel", sobel_file, RV_FRAGMENT_SHADER);
 
-	char* gray_file;
-	rvLoadFile("./data/fragment_gray.frag", gray_file, true);
-	GLuint gray_fs = rvCreateShader("fragment_gray", gray_file, RV_FRAGMENT_SHADER);
+	GLuint blur_fs = LoadShader("./data/blurPass.frag", "fragment_blur");
+
+	GLuint sobel_fs = LoadShader("./data/fragment_sobel.frag", "fragment_sobel");
+
+	GLuint sobel_add_fs = LoadShader("./data/fragment_sobel_add.frag", "fragment_sobel_add");
+
+	GLuint sobel_outline_fs = LoadShader("./data/fragment_sobel_outline.frag", "fragment_sobel_outline");
+
+	GLuint gray_fs = LoadShader("./data/fragment_gray.frag", "fragment_gray");
+
+	GLuint cray_fs = LoadShader("./data/fragment_texture_cray.frag", "fragment_texture_cray");
+
+
+	GLuint noise = LoadTexture("./data/texture/white_noise.jpg");
+	glBindTexture(GL_TEXTURE_2D, noise);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
+
 
 	postProcessPipeline = new PostProcess(default_vs, default_fs, width, height);
 	postProcessPipeline->setScreenQuad(screenQuadVAO, screenQuadVBO);
 
 	//decorate the post-process, adding more steps
-	//postProcessPipeline = new PostProcessDecorator(postProcessPipeline, default_vs, sobel_fs, width, height);
+	postProcessPipeline = new PostProcessDecorator(postProcessPipeline, default_vs, sobel_outline_fs, width, height);
+	postProcessPipeline = new PostProcessDecoratorTexturized(postProcessPipeline, noise, default_vs, cray_fs, width, height);
 	//postProcessPipeline = new PostProcessDecorator(postProcessPipeline, default_vs, blur_fs, width, height);
 
 

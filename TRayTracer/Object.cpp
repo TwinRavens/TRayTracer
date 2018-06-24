@@ -16,14 +16,17 @@ Object::Object(ObjectData * data)
 
 void Object::UpdateVertices()
 {
-	if (needUpdate) {
+	if (needUpdate)
+	{
 	glm:vec4 temp(1);
-		for (int i = 0; i < data->verticesCount; i++) {
+		for (int i = 0; i < data->verticesCount; i++)
+		{
 			temp.x = data->vertices[i].x;
 			temp.y = data->vertices[i].y;
 			temp.z = data->vertices[i].z;
 			modVertices[i] = transformMat * temp;
 		}
+		needUpdate = false;
 	}
 }
 

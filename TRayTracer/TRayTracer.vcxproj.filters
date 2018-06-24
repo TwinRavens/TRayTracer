@@ -46,6 +46,9 @@
     <ClCompile Include="RayFileLoader.cpp">
       <Filter>Source\RayTracer</Filter>
     </ClCompile>
+    <ClCompile Include="PostProcessDecoratorTexturized.cpp">
+      <Filter>Source\PostProcess</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="App.h">
@@ -114,6 +117,9 @@
     <ClInclude Include="RayFileLoader.h">
       <Filter>Header\RayTracer</Filter>
     </ClInclude>
+    <ClInclude Include="PostProcessDecoratorTexturized.h">
+      <Filter>Header\PostProcess</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="bin\data\vertex_uv.vert">
@@ -138,6 +144,18 @@
       <Filter>Shaders\PostProcess</Filter>
     </None>
     <None Include="bin\data\fragment_sobel.frag">
+      <Filter>Shaders\PostProcess</Filter>
+    </None>
+    <None Include="bin\data\fragment_sobel_add.frag">
+      <Filter>Shaders\PostProcess</Filter>
+    </None>
+    <None Include="bin\data\fragment_texture_cray.frag">
+      <Filter>Shaders\PostProcess</Filter>
+    </None>
+    <None Include="bin\data\fragment_sobel_outline.frag">
+      <Filter>Shaders\PostProcess</Filter>
+    </None>
+    <None Include="bin\data\fragment_npr.frag">
       <Filter>Shaders\PostProcess</Filter>
     </None>
   </ItemGroup>

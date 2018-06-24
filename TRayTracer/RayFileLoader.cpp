@@ -33,7 +33,7 @@ ObjectData* RayFileLoader::InterpretMesh(aiMesh * mesh)
 	for (int i = 0; i < count; i++)
 	{
 
-		data->triangles[i] = Triangle{ mesh->mFaces[i].mIndices[0], mesh->mFaces[i].mIndices[1], mesh->mFaces[i].mIndices[2], 0,
+		data->triangles[i] = Triangle{ mesh->mFaces[i].mIndices[0], mesh->mFaces[i].mIndices[1], mesh->mFaces[i].mIndices[2], 1,
 										mesh->mFaces[i].mIndices[0], mesh->mFaces[i].mIndices[1], mesh->mFaces[i].mIndices[2], 0 };
 	}
 
@@ -91,6 +91,7 @@ ObjectData* RayFileLoader::LoadObject(const std::string& path)
 		finalObject->triangles = new Triangle[finalObject->triangleCount];
 
 		//get all of the objectData together
+		int cIndex = 0;
 		for (int i = 0, cVert = 0, cTri = 0; i < scene->mNumMeshes; i++)
 		{
 			for (int k = 0; k < temp[i]->verticesCount; k++, cVert++)
@@ -100,8 +101,10 @@ ObjectData* RayFileLoader::LoadObject(const std::string& path)
 			}
 			for (int k = 0; k < temp[i]->triangleCount; k++, cTri++)
 			{
-				finalObject->triangles[cTri] = temp[i]->triangles[k];
+				finalObject->triangles[cTri] = {	temp[i]->triangles[k].v1 + cIndex, temp[i]->triangles[k].v2 + cIndex, temp[i]->triangles[k].v3 + cIndex, temp[i]->triangles[k]._padding1,
+													temp[i]->triangles[k].n1 + cIndex, temp[i]->triangles[k].n2 + cIndex, temp[i]->triangles[k].n3 + cIndex, temp[i]->triangles[k]._padding2 };
 			}
+			cIndex += temp[i]->verticesCount;
 			delete temp[i];
 		}
 
