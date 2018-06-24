@@ -370,8 +370,10 @@ inline void rav::App::CreatePostProcess()
 	postProcessPipeline = new PostProcess(default_vs, default_fs, width, height);
 	postProcessPipeline->setScreenQuad(screenQuadVAO, screenQuadVBO);
 
-	//decorate the post-process, adding more steps
-	postProcessPipeline = new PostProcessDecorator(postProcessPipeline, default_vs, sobel_outline_fs, width, height);
+	////decorate the post-process, adding more steps
+	//postProcessPipeline = new PostProcessDecorator(postProcessPipeline, default_vs, sobel_outline_fs, width, height);
+	//postProcessPipeline = new PostProcessDecorator(postProcessPipeline, default_vs, sobel_add_fs, width, height);
+	//postProcessPipeline = new PostProcessDecorator(postProcessPipeline, default_vs, sobel_fs, width, height);
 	//postProcessPipeline = new PostProcessDecoratorTexturized(postProcessPipeline, noise, default_vs, cray_fs, width, height);
 	//postProcessPipeline = new PostProcessDecorator(postProcessPipeline, default_vs, blur_fs, width, height);
 
