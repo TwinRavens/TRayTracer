@@ -96,10 +96,10 @@ int App::Initialize(cint &width, cint &height, str name, bool fullscreen, bool v
 
 	assert(version[0] > '3' && "Installed version of OpenGL doesn't support compute shader");
 
-	//For proper rendering
-	glEnable(GL_DEPTH_TEST);	//Enable depth-testing
-	glDepthFunc(GL_LESS);		//Depth-testing interprets a smaller value as "closer"
-	glEnable(GL_CULL_FACE);		//Cull faces whose normals don't point towards the camera
+	////For proper rendering
+	//glEnable(GL_DEPTH_TEST);	//Enable depth-testing
+	//glDepthFunc(GL_LESS);		//Depth-testing interprets a smaller value as "closer"
+	//glEnable(GL_CULL_FACE);		//Cull faces whose normals don't point towards the camera
 
 	//Texture2D enabling
 	glEnable(GL_TEXTURE_2D);	//Enable 2D Texture slot
@@ -107,8 +107,8 @@ int App::Initialize(cint &width, cint &height, str name, bool fullscreen, bool v
 	//Enable caching of buttons pressed
 	glfwSetInputMode(window, GLFW_STICKY_MOUSE_BUTTONS, GLFW_TRUE);
 
-	//Set a nice blue background
-	glClearColor(0.0f, 0.4509803921568627f, 0.8980392156862745f, 1.0f);
+	////Set a nice blue background
+	//glClearColor(0.0f, 0.4509803921568627f, 0.8980392156862745f, 1.0f);
 
 	//Initialize Raytracer
 	raytracer.Setup(width, height, 2);

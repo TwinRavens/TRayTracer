@@ -373,7 +373,7 @@ GLint rav::RayTracer::shadingPass(int depth_level)
 	glDispatchCompute(width * height / 1024, (depth_level + 1), 1);
 
 	//Avoid concurrent memory access!
-	glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT | GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+	glMemoryBarrier(GL_ALL_BARRIER_BITS);
 
 	return 0;
 }

@@ -92,6 +92,15 @@ vec4 when_le(vec4 x, vec4 y) {
 }
 
 
+void overrideEmptyRayHit(int rayId, ivec2 pixelCoords)
+{
+	//Check if someone hited too far and sign as no hit
+	if(hits[rayId].rayDir.w >= 1000000.0f)
+	{
+		hits[rayId].pixelCoordsObjIdType = ivec4(pixelCoords.xy, -1, 1);
+	}
+}
+
 void main()
 {
 	//Get working ray id
@@ -147,35 +156,44 @@ void main()
 
 	//Solve component parameters
 	float u = dot(cross(tv, rayDir) * invdet, tr);
-	float v = dot(cross(rayDir, tu) * invdet, tr);
-	float t = -dot(cross(tu, tv) * invdet, tr);
-
-	//Use 'u' and 'v' to check for triangle boundaries
-	if (u > 0 && v > 0 && (u+v) <= 1 && t >= 0)
+	if(u < 0)
 	{
-		//Make sure serialization occurs until the very end
-
-		//Check for closest hit
-		if(hits[rayId].rayDir.w > t)
-		{
-			//Get triangle vertices
-			vec3 n1 = normals[triangles[triangleId].vIdmId[0]].xyz; //First Vertex
-			vec3 n2 = normals[triangles[triangleId].vIdmId[1]].xyz; //Second Vertex
-			vec3 n3 = normals[triangles[triangleId].vIdmId[2]].xyz; //Third Vertex
-			vec3 normal = n1 * (1.0f-(u+v)) + n2 * u + n3 * v;
-			normal = normalize(normal);
-
-			//Calculate hit point
-			vec3 hit = rayOrigin + rayDir * t;
-			hits[rayId] = RayHit(vec4(hit, rays[rayId].origAndWght.w), vec4(normal, 0), vec4(rayDir, t), ivec4(pixelCoords.xy, triangles[triangleId].vIdmId.w, 1));
-		}
+		overrideEmptyRayHit(rayId, pixelCoords);
+		return;
 	}
-	else
+
+	float v = dot(cross(rayDir, tu) * invdet, tr);
+	if(v < 0)
 	{
-		//Check if someone hited too far and sign as no hit
-		if(hits[rayId].rayDir.w >= 1000000.0f)
-		{
-			hits[rayId].pixelCoordsObjIdType = ivec4(pixelCoords.xy, -1, 1);
-		}
+		overrideEmptyRayHit(rayId, pixelCoords);
+		return;
+	}
+
+	float t = -dot(cross(tu, tv) * invdet, tr);
+	if(t < 0)
+	{
+		overrideEmptyRayHit(rayId, pixelCoords);
+		return;
+	}
+
+	if((u+v) > 1)
+	{
+		overrideEmptyRayHit(rayId, pixelCoords);
+		return;
+	}
+
+	//Check for closest hit
+	if(hits[rayId].rayDir.w > t)
+	{
+		//Get triangle vertices
+		vec3 n1 = normals[triangles[triangleId].vIdmId[0]].xyz; //First Vertex
+		vec3 n2 = normals[triangles[triangleId].vIdmId[1]].xyz; //Second Vertex
+		vec3 n3 = normals[triangles[triangleId].vIdmId[2]].xyz; //Third Vertex
+		vec3 normal = n1 * (1.0-(u+v)) + n2 * u + n3 * v;
+		normal = normalize(normal);
+
+		//Calculate hit point
+		vec3 hit = rayOrigin + rayDir * t;
+		hits[rayId] = RayHit(vec4(hit, rays[rayId].origAndWght.w), vec4(normal, 0), vec4(rayDir, t), ivec4(pixelCoords.xy, triangles[triangleId].vIdmId.w, 1));
 	}
 }
