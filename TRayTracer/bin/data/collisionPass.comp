@@ -100,10 +100,12 @@ void main()
 
 	//Determinant for inverse matrix
 	vec3 q = cross(rayDir, tv);
-	float det = dot(tu, q);
+	double ddet = dot(tu, q);
+	float det = float(ddet);
 //	if(det > -1 && det < 1) //If too close to zero
 //		return;
-	float invdet = 1.0/det;
+	double invddet = 1.0/ddet;
+	float invdet = float(invddet);
 
 	//Solve component parameters
 	vec3 s = rayOrigin - v1;
@@ -119,7 +121,7 @@ void main()
 	if((u+v) > 1)
 		return;
 
-	float t = dot(tv, r) * invdet;
+	double t = dot(tv, r) * invddet;
 	if(t <= 0)
 		return;
 
@@ -134,7 +136,7 @@ void main()
 		normal = normalize(normal);
 
 		//Calculate hit point
-		vec3 hit = rayOrigin + rayDir * t;
+		vec3 hit = rayOrigin + vec3(rayDir * t);
 		hits[rayId] = RayHit(vec4(hit, rays[rayId].origAndWght.w), vec4(normal, 0), vec4(rayDir, t), ivec4(pixelCoords.xy, triangles[triangleId].vIdmId.w, 1));
 	}
 }

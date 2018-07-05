@@ -612,7 +612,7 @@ GLint rav::RayTracer::Setup(int width, int height, int depth)
 
 		}
 		#pragma endregion
-		objData = RayFileLoader::LoadObject("./data/mesh/test3.obj");
+		objData = RayFileLoader::LoadObject("./data/mesh/test4.obj");
 
 		#pragma region Vertex
 		{
