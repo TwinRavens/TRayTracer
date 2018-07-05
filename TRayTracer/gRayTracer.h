@@ -37,7 +37,7 @@ namespace rav
 
 		//Screen data
 		int width, height, raysSize, depthLevel;
-		GLuint screenBuffer;
+		GLuint screenBuffer, diffuseBuffer, specularBuffer;
 
 		//Shader Storage Buffer Objects
 		GLuint raysBuffer, rayHitsBuffer;
@@ -57,6 +57,7 @@ namespace rav
 		//Shading pass
 		GLint shadingPass(int depth_level);
 
+		void GenerateScreenBuffer(GLuint& texture);
 
 	public:
 		RayTracer();
@@ -67,6 +68,9 @@ namespace rav
 		//Renders a full image with given trace depth
 		GLint Compute();
 
+		GLuint getScreenBufferId();
+		GLuint getDiffuseBufferId();
+		GLuint getSpecularBufferId();
 		glm::mat4 cameraRot;
 		glm::vec4 cameraPos = glm::vec4(0, 0, 10, 1);
 

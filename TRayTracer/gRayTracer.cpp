@@ -481,6 +481,12 @@ GLint rav::RayTracer::shadingPass(int depth_level)
 	//Bind front buffer to layout 0
 	glBindImageTexture(0, screenBuffer, 0, GL_FALSE, 0, GL_READ_WRITE, GL_RGBA32F);
 
+	//Bind front buffer to layout 0
+	glBindImageTexture(1, diffuseBuffer, 0, GL_FALSE, 0, GL_READ_WRITE, GL_RGBA32F);
+
+	//Bind front buffer to layout 0
+	glBindImageTexture(2, specularBuffer, 0, GL_FALSE, 0, GL_READ_WRITE, GL_RGBA32F);
+
 	//Update time variable
 	//GLint timeLoc = glGetUniformLocation(shadingProgram, "time");
 	GLint timeLoc = 0;
@@ -514,6 +520,22 @@ GLint rav::RayTracer::shadingPass(int depth_level)
 
 	return 0;
 }
+
+void rav::RayTracer::GenerateScreenBuffer(GLuint& texture)
+{
+	//Generate empty texture
+	glGenTextures(1, &texture);
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, texture);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, width, height, 0, GL_RGBA, GL_FLOAT, NULL);
+
+	//Define texture parameters
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);	//Repeat out of bounds UVs
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);	//Repeat out of bounds UVs
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);		//Set Image sampling filtering
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);		//Set Image sampling filtering
+}
+
 
 rav::RayTracer::RayTracer()
 {
@@ -821,17 +843,9 @@ GLint rav::RayTracer::Setup(int width, int height, int depth)
 	#pragma endregion
 
 	#pragma region Generate Screen Front Buffer
-	//Generate empty texture
-	glGenTextures(1, &screenBuffer);
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, screenBuffer);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, width, height, 0, GL_RGBA, GL_FLOAT, NULL);
-
-	//Define texture parameters
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);	//Repeat out of bounds UVs
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);	//Repeat out of bounds UVs
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);		//Set Image sampling filtering
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);		//Set Image sampling filtering
+	GenerateScreenBuffer(screenBuffer);
+	GenerateScreenBuffer(diffuseBuffer);
+	GenerateScreenBuffer(specularBuffer);
 	#pragma endregion
 
 	//Returns screen buffer index
@@ -854,4 +868,19 @@ GLint rav::RayTracer::Compute()
 
 	//Return OpenGL Front Buffer id
 	return screenBuffer;
+}
+
+GLuint rav::RayTracer::getScreenBufferId()
+{
+	return screenBuffer;
+}
+
+GLuint rav::RayTracer::getDiffuseBufferId()
+{
+	return diffuseBuffer;
+}
+
+GLuint rav::RayTracer::getSpecularBufferId()
+{
+	return specularBuffer;
 }
