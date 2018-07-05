@@ -49,6 +49,9 @@
     <ClCompile Include="PostProcessDecoratorTexturized.cpp">
       <Filter>Source\PostProcess</Filter>
     </ClCompile>
+    <ClCompile Include="PostProcessDecoratorFloatParam.cpp">
+      <Filter>Source\PostProcess</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="App.h">
@@ -120,6 +123,9 @@
     <ClInclude Include="PostProcessDecoratorTexturized.h">
       <Filter>Header\PostProcess</Filter>
     </ClInclude>
+    <ClInclude Include="PostProcessDecoratorFloatParam.h">
+      <Filter>Header\PostProcess</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="bin\data\vertex_uv.vert">
@@ -165,6 +171,9 @@
       <Filter>Shaders</Filter>
     </None>
     <None Include="bin\data\fragment_merge.frag">
+      <Filter>Shaders\PostProcess</Filter>
+    </None>
+    <None Include="bin\data\fragment_hdr.frag">
       <Filter>Shaders\PostProcess</Filter>
     </None>
   </ItemGroup>

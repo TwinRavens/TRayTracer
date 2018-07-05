@@ -170,6 +170,7 @@
     <ClCompile Include="Object.cpp" />
     <ClCompile Include="PostProcess.cpp" />
     <ClCompile Include="PostProcessDecorator.cpp" />
+    <ClCompile Include="PostProcessDecoratorFloatParam.cpp" />
     <ClCompile Include="PostProcessDecoratorTexturized.cpp" />
     <ClCompile Include="RayFileLoader.cpp" />
   </ItemGroup>
@@ -192,6 +193,7 @@
     <ClInclude Include="Object.h" />
     <ClInclude Include="PostProcess.h" />
     <ClInclude Include="PostProcessDecorator.h" />
+    <ClInclude Include="PostProcessDecoratorFloatParam.h" />
     <ClInclude Include="PostProcessDecoratorTexturized.h" />
     <ClInclude Include="Primitives.h" />
     <ClInclude Include="Ray.h" />
@@ -208,6 +210,7 @@
     </None>
     <None Include="bin\data\fragment_base.frag" />
     <None Include="bin\data\fragment_gray.frag" />
+    <None Include="bin\data\fragment_hdr.frag" />
     <None Include="bin\data\fragment_merge.frag" />
     <None Include="bin\data\fragment_npr.frag" />
     <None Include="bin\data\fragment_sobel.frag" />
