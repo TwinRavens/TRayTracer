@@ -97,25 +97,30 @@ void main()
 
 	//=====Solve for collision=====//
 	//Triangle origin to ray origin vector
-	vec3 tr = rayOrigin - v1;
 
 	//Determinant for inverse matrix
-	float invdet = 1.0/dot(tu, cross(tv, rayDir));
+	vec3 q = cross(rayDir, tv);
+	float det = dot(tu, q);
+//	if(det > -1 && det < 1) //If too close to zero
+//		return;
+	float invdet = 1.0/det;
 
 	//Solve component parameters
-	float u = dot(cross(tv, rayDir) * invdet, tr);
+	vec3 s = rayOrigin - v1;
+	float u = dot(s, q) * invdet;
 	if(u < 0)
 		return;
 
-	float v = dot(cross(rayDir, tu) * invdet, tr);
+	vec3 r = cross(s, tu);
+	float v = dot(rayDir, r) * invdet;
 	if(v < 0)
 		return;
 
-	float t = -dot(cross(tu, tv) * invdet, tr);
-	if(t < 0)
+	if((u+v) > 1)
 		return;
 
-	if((u+v) > 1)
+	float t = dot(tv, r) * invdet;
+	if(t <= 0)
 		return;
 
 	//Check for closest hit
