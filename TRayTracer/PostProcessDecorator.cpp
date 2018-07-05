@@ -40,8 +40,9 @@ void PostProcessDecorator::PreProcess()
 
 GLuint PostProcessDecorator::Process(GLuint input)
 {
+	GLuint i = postProcess->Process(input);
 	PreProcess();
-	return PostProcess::Process(postProcess->Process(input));
+	return PostProcess::Process(i);
 }
 
 

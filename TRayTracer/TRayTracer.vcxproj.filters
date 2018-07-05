@@ -170,6 +170,9 @@
     <None Include="bin\data\fragment_sobel_test2.frag">
       <Filter>Shaders</Filter>
     </None>
+    <None Include="bin\data\fragment_merge.frag">
+      <Filter>Shaders\PostProcess</Filter>
+    </None>
     <None Include="bin\data\fragment_hdr.frag">
       <Filter>Shaders\PostProcess</Filter>
     </None>
