@@ -52,6 +52,7 @@ namespace rav
 		GLuint defaultPrg;
 		PostProcess *postProcessPipeline;
 		RayTracer raytracer;
+		GLfloat hdrExposure = 1.0f;
 
 		void CreateDefaultProgram();
 		void CreateScreenQuad();
