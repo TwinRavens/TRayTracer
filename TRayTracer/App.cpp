@@ -352,6 +352,8 @@ inline void rav::App::CreatePostProcess()
 
 	GLuint sobel_fs = LoadShader("./data/fragment_sobel.frag", "fragment_sobel");
 
+	GLuint sobel2_fs = LoadShader("./data/fragment_sobel_test2.frag", "fragment_sobel2");
+
 	GLuint sobel_add_fs = LoadShader("./data/fragment_sobel_add.frag", "fragment_sobel_add");
 
 	GLuint sobel_outline_fs = LoadShader("./data/fragment_sobel_outline.frag", "fragment_sobel_outline");
@@ -374,6 +376,7 @@ inline void rav::App::CreatePostProcess()
 	//postProcessPipeline = new PostProcessDecorator(postProcessPipeline, default_vs, sobel_outline_fs, width, height);
 	//postProcessPipeline = new PostProcessDecorator(postProcessPipeline, default_vs, sobel_add_fs, width, height);
 	//postProcessPipeline = new PostProcessDecorator(postProcessPipeline, default_vs, sobel_fs, width, height);
+	//postProcessPipeline = new PostProcessDecorator(postProcessPipeline, default_vs, sobel2_fs, width, height);
 	//postProcessPipeline = new PostProcessDecoratorTexturized(postProcessPipeline, noise, default_vs, cray_fs, width, height);
 	//postProcessPipeline = new PostProcessDecorator(postProcessPipeline, default_vs, blur_fs, width, height);
 

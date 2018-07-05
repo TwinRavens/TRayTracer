@@ -212,6 +212,7 @@
     <None Include="bin\data\fragment_sobel.frag" />
     <None Include="bin\data\fragment_sobel_add.frag" />
     <None Include="bin\data\fragment_sobel_outline.frag" />
+    <None Include="bin\data\fragment_sobel_test2.frag" />
     <None Include="bin\data\fragment_texture_cray.frag" />
     <None Include="bin\data\setupPass.comp" />
     <None Include="bin\data\shadingPass.comp">
