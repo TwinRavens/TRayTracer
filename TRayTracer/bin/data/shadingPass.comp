@@ -2,6 +2,8 @@
 
 layout(local_size_x = 1024, local_size_y = 1, local_size_z = 1) in;
 layout(rgba32f, binding = 0) uniform image2D img_output;
+layout(rgba32f, binding = 1) uniform image2D img_difuse;
+layout(rgba32f, binding = 2) uniform image2D img_specular;
 
 layout(location=0) uniform float time;
 layout(location=1) uniform int depthLevel;
@@ -67,43 +69,12 @@ float when_neq(float x, float y) {
   return abs(sign(x - y));
 }
 
-vec4 shade(vec3 point, vec3 normal, vec3 rayDir, int objId) {
-
-		//ambient
-		float ka = materials[objId].specDiffAmbiCoefShinness.z;  //coeficient of ambient light
-		vec4 ia = ambientColour * ka;
-		vec4 final = ia;
-
-		//diffuse
-		float kd = materials[objId].specDiffAmbiCoefShinness.y; // coeficient of diffuse light
-		vec4 diffuseColor = vec4(materials[objId].diffColAlpha.rgb, 1); // color from the object
-
-		for (int i = 0; i < lights[0].lightPosCount.w; i++) {
-
-			vec3 lightDir = normalize(lights[i].lightPosCount.xyz - point);
-			float diffuse = max(dot(lightDir, normal), 0);
-			vec4 id = kd * diffuse * diffuseColor * lights[i].lightColor;
-
-			//specular TODO: review this
-			float ks = materials[objId].specDiffAmbiCoefShinness.x;
-			float specullarPower = materials[objId].specDiffAmbiCoefShinness.w;
-
-			//Reflect = lightDir - 2 * normal * dot(normal, lightDir)
-			//Ou normalize(2 * normal * dot(normal, lightDir) - lightDir) quando o raio vem da fonte de luz
-			vec3 reflection = normalize(lightDir - 2 * normal * diffuse);
-			float specular = max(abs(pow(dot(reflection, rayDir), specullarPower)), 0);
-			
-			vec4 is = ks * specular * lights[i].lightColor;
-
-			final += id + is;
-		}
-
-		return final;
-}
 
 void main() {
 	// base pixel colour for image
 	vec4 pixel = vec4(0);
+	vec4 pixelDif = vec4(0);
+	vec4 pixelSpec = vec4(0);
 
 	//Get working ray id
 	const int hitId = int(gl_GlobalInvocationID.x*pow(2,depthLevel)+gl_GlobalInvocationID.y);
@@ -122,8 +93,43 @@ void main() {
 		vec3 hitNor = hits[hitId].normal.xyz;
 		vec3 rayDir = hits[hitId].rayDir.xyz;
 		
+		{
+			float ka = materials[objId].specDiffAmbiCoefShinness.z;  //coeficient of ambient light
+			vec4 ia = ambientColour * ka;
+			pixelDif = ia;
+
+			//diffuse
+			float kd = materials[objId].specDiffAmbiCoefShinness.y; // coeficient of diffuse light
+			vec4 diffuseColor = vec4(materials[objId].diffColAlpha.rgb, 1); // color from the object
+
+			for (int i = 0; i < lights[0].lightPosCount.w; i++) {
+
+				vec3 lightDir = normalize(lights[i].lightPosCount.xyz - hitPos);
+				float diffuse = max(dot(lightDir, hitNor), 0);
+				vec4 id = kd * diffuse * diffuseColor * lights[i].lightColor;
+
+				//specular TODO: review this
+				float ks = materials[objId].specDiffAmbiCoefShinness.x;
+				float specullarPower = materials[objId].specDiffAmbiCoefShinness.w;
+
+				//Reflect = lightDir - 2 * normal * dot(normal, lightDir)
+				//Ou normalize(2 * normal * dot(normal, lightDir) - lightDir) quando o raio vem da fonte de luz
+				vec3 reflection = normalize(lightDir - 2 * hitNor * diffuse);
+				float specular = max(abs(pow(dot(reflection, rayDir), specullarPower)), 0);
+				
+				vec4 is = ks * specular * lights[i].lightColor;
+
+				pixelSpec += is;
+				pixelDif += id;
+			}
+		}
+		
+		pixel = pixelSpec + pixelDif;
+
 		//Do proper shading
-		pixel = mix(vec4(0), shade(hitPos, hitNor, rayDir, objId), materials[objId].diffColAlpha.a);
+		pixelSpec = mix(vec4(0), pixelSpec, materials[objId].diffColAlpha.a);
+		pixelDif = mix(vec4(0), pixelDif, materials[objId].diffColAlpha.a);
+		pixel = mix(vec4(0), pixel, materials[objId].diffColAlpha.a);
 		
 		//Reflection
 		vec3 reflectedRayDir = reflect(rayDir, hitNor);
@@ -147,12 +153,34 @@ void main() {
 	hits[hitId].pixelCoordsObjIdType.z = -1;
 	hits[hitId].rayDir.w = 1000000.0f;
 
-	//Get last pass pixel (only if this is not the first pass)
-	vec4 lastPixel = imageLoad(img_output, pixelCoords) * step(1, depthLevel);
+	{
+		//Get last pass pixel (only if this is not the first pass)
+		vec4 lastPixel = imageLoad(img_output, pixelCoords) * step(1, depthLevel);
 
-	//Calculate final pass pixel
-	vec4 outPixel = lastPixel + pixel * rayContribution;
+		//Calculate final pass pixel
+		vec4 outPixel = lastPixel + pixel * rayContribution;
 
-	imageStore(img_output, pixelCoords, outPixel);
+		imageStore(img_output, pixelCoords, outPixel);
+	}
+
+	{
+		//Get last pass pixel (only if this is not the first pass)
+		vec4 lastPixel = imageLoad(img_difuse, pixelCoords) * step(1, depthLevel);
+
+		//Calculate final pass pixel
+		vec4 outPixel = lastPixel + pixelDif * rayContribution;
+
+		imageStore(img_difuse, pixelCoords, outPixel);
+	}
+
+	{
+		//Get last pass pixel (only if this is not the first pass)
+		vec4 lastPixel = imageLoad(img_specular, pixelCoords) * step(1, depthLevel);
+
+		//Calculate final pass pixel
+		vec4 outPixel = lastPixel + pixelSpec * rayContribution;
+
+		imageStore(img_specular, pixelCoords, outPixel);
+	}
 
 }

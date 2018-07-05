@@ -189,11 +189,11 @@ int App::Run()
 #pragma endregion
 
 		//===============COMPUT RAYTRACING HERE====================
-		GLint raytracePreview = raytracer.Compute();
+		raytracer.Compute();
 		//===============COMPUT RAYTRACING HERE====================
 
 #pragma region PostProcess
-		GLuint idPostProcess = postProcessPipeline->Process(raytracePreview);
+		GLuint idPostProcess = postProcessPipeline->Process(raytracer.getScreenBufferId());
 #pragma endregion
 
 #pragma region Draw Raytracer Output
