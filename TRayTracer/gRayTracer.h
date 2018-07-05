@@ -33,7 +33,7 @@ namespace rav
 
 
 		//Raytracer programs
-		GLint collisionProgram, shadingProgram;
+		GLint setupProgram, collisionProgram, shadingProgram;
 
 		//Screen data
 		int width, height, raysSize, depthLevel;
@@ -47,6 +47,9 @@ namespace rav
 
 		//Load Compute Shaders
 		GLint loadPrograms();
+
+		//Setup pass
+		GLint setupPass();
 
 		//Collision pass
 		GLint collisionPass(int depth_level);

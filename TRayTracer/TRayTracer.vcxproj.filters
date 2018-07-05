@@ -158,6 +158,9 @@
     <None Include="bin\data\fragment_npr.frag">
       <Filter>Shaders\PostProcess</Filter>
     </None>
+    <None Include="bin\data\setupPass.comp">
+      <Filter>Shaders\RayTracer</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Header">

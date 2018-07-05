@@ -1,0 +1,67 @@
+#version 430
+
+layout(local_size_x = 32, local_size_y = 1, local_size_z = 1) in;
+
+layout(location=1) uniform int maxDepthLevel;
+layout(location=2) uniform int screenWidth;
+layout(location=3) uniform int screenHeight;
+layout(location=4) uniform mat4 cameraRot;
+layout(location=5) uniform vec4 cameraPos;
+
+struct Ray
+{
+	vec4 origAndWght;
+	vec4 dir;
+	ivec4 pixelCoords; //And two padding
+};
+
+layout (std140) buffer rBuffer
+{
+  Ray rays[];
+};
+
+struct RayHit
+{
+	vec4 hitAndWeight;
+	vec4 normal;
+	vec4 rayDir;
+	ivec4 pixelCoordsObjIdType;
+};
+
+layout (std140) buffer rHitBuffer
+{
+	RayHit hits[];
+};
+
+
+//SETUP PASS
+void main()
+{
+	//Get working ray id
+	const int rayId = int(gl_GlobalInvocationID.x);
+
+	//Find ray screen coords based on id
+	ivec2 screen_coord = ivec2(mod(rayId, screenWidth), rayId/screenWidth);
+
+	//Define screen rays
+	vec2 screenSize = vec2(screenWidth, screenHeight);
+	float aspectRatio = screenSize.x / screenSize.y;
+	float fov = 33.0; //get this from options
+	float fovScale = tan(radians(fov * 0.5));
+	vec4 origin = { 0, 0, 0, 1 };
+	origin += cameraPos;
+
+	const float x = (2.0 * (screen_coord.x + 0.5) / screenSize.x - 1.0) * aspectRatio * fovScale;
+	const float y = (1.0 - 2.0 * (screen_coord.y + 0.5) / screenSize.y) * fovScale;
+	vec4 dir = vec4(normalize(vec3( x, y, -1.0f )), 0);
+
+	//Create ray in memory
+	rays[rayId].origAndWght = origin;
+	rays[rayId].dir = cameraRot*dir;
+	rays[rayId].pixelCoords = screen_coord.xyxy;
+
+	//Clear rayhits
+	hits[rayId].rayDir.w = 1000000.0f;
+	hits[rayId].pixelCoordsObjIdType = ivec4(screen_coord.xy, -1, 1);
+
+}

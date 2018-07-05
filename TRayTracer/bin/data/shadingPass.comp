@@ -106,7 +106,7 @@ void main() {
 	vec4 pixel = vec4(0);
 
 	//Get working ray id
-	const int hitId = int(gl_GlobalInvocationID.x*(depthLevel+1)+gl_GlobalInvocationID.y);
+	const int hitId = int(gl_GlobalInvocationID.x*pow(2,depthLevel)+gl_GlobalInvocationID.y);
 
 	//Get texture pixel coords from hit
 	const ivec2 pixelCoords = hits[hitId].pixelCoordsObjIdType.xy;
@@ -116,7 +116,7 @@ void main() {
 	
 	const float rayContribution = hits[hitId].hitAndWeight.w;
 
-	if (objId != -1) //TODO: OPTIMIZE THIS!
+	if (objId != -1 || rayContribution == 0) //TODO: OPTIMIZE THIS!
 	{
 		vec3 hitPos = hits[hitId].hitAndWeight.xyz;
 		vec3 hitNor = hits[hitId].normal.xyz;
