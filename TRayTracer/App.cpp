@@ -8,7 +8,8 @@
 #include <glm/gtc/type_ptr.hpp>
 
 
-#include "PostProcessDecoratorTexturized.h" 
+#include "PostProcessDecoratorTexturized.h"
+#include "PostProcessDecoratorFloatParam.h"
 
 
 //Using Ravine namespace
@@ -186,6 +187,15 @@ int App::Run()
 			translation.x += 0.2;
 		raytracer.cameraPos += lookRot * translation;
 
+		//HDR Exposure
+		if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
+			hdrExposure *= 1.2;
+		if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
+			hdrExposure /= 1.2;
+		hdrExposure = max(hdrExposure, 0.01);
+		if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
+			hdrExposure = 1.0;
+
 #pragma endregion
 
 		//===============COMPUT RAYTRACING HERE====================
@@ -362,6 +372,8 @@ inline void rav::App::CreatePostProcess()
 
 	GLuint cray_fs = LoadShader("./data/fragment_texture_cray.frag", "fragment_texture_cray");
 
+	GLuint hdr_fs = LoadShader("./data/fragment_hdr.frag", "fragment_hdr");
+
 
 	GLuint noise = LoadTexture("./data/texture/white_noise.jpg");
 	glBindTexture(GL_TEXTURE_2D, noise);
@@ -379,7 +391,7 @@ inline void rav::App::CreatePostProcess()
 	//postProcessPipeline = new PostProcessDecorator(postProcessPipeline, default_vs, sobel2_fs, width, height);
 	//postProcessPipeline = new PostProcessDecoratorTexturized(postProcessPipeline, noise, default_vs, cray_fs, width, height);
 	//postProcessPipeline = new PostProcessDecorator(postProcessPipeline, default_vs, blur_fs, width, height);
-
-
+	postProcessPipeline = new PostProcessDecoratorFloatParam(postProcessPipeline, hdrExposure, "exposure", default_vs, hdr_fs, width, height);
+	
 }
 
