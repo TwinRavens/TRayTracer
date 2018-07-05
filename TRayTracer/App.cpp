@@ -34,7 +34,7 @@ App & App::getApp()
 	return app;
 }
 
-void _update_fps_counter(GLFWwindow* window) {
+void _update_fps_counter(GLFWwindow* window, str name) {
 	static double previous_seconds = glfwGetTime();
 	static int frame_count;
 	double current_seconds = glfwGetTime();
@@ -42,8 +42,8 @@ void _update_fps_counter(GLFWwindow* window) {
 	if (elapsed_seconds > 0.01) {
 		previous_seconds = current_seconds;
 		double fps = (double)frame_count / elapsed_seconds;
-		char tmp[128];
-		sprintf_s(tmp, "opengl @ fps: %.2f", fps);
+		char tmp[256];
+		sprintf_s(tmp, "%s @ fps: %.2f", name, fps);
 		glfwSetWindowTitle(window, tmp);
 		frame_count = 0;
 	}
@@ -60,6 +60,7 @@ int App::Initialize(cint &width, cint &height, str name, bool fullscreen, bool v
 		return 1;
 	}
 
+	this->name = name;
 	//Link error callback function
 	glfwSetErrorCallback(App::error_callback);
 
@@ -146,7 +147,7 @@ int App::Run()
 
 	while (!glfwWindowShouldClose(window))
 	{
-		_update_fps_counter(window);
+		_update_fps_counter(window, name);
 
 #pragma region Inputs
 
@@ -193,7 +194,7 @@ int App::Run()
 		//===============COMPUT RAYTRACING HERE====================
 
 #pragma region PostProcess
-		GLuint idPostProcess = postProcessPipeline->Process(raytracer.getScreenBufferId());
+		GLuint idPostProcess = postProcessPipeline->Process(raytracer.getDiffuseBufferId());
 #pragma endregion
 
 #pragma region Draw Raytracer Output
@@ -362,6 +363,8 @@ inline void rav::App::CreatePostProcess()
 
 	GLuint cray_fs = LoadShader("./data/fragment_texture_cray.frag", "fragment_texture_cray");
 
+	GLuint merge_fs = LoadShader("./data/fragment_merge.frag", "fragment_merge");
+
 
 	GLuint noise = LoadTexture("./data/texture/white_noise.jpg");
 	glBindTexture(GL_TEXTURE_2D, noise);
@@ -373,12 +376,13 @@ inline void rav::App::CreatePostProcess()
 	postProcessPipeline->setScreenQuad(screenQuadVAO, screenQuadVBO);
 
 	////decorate the post-process, adding more steps
-	//postProcessPipeline = new PostProcessDecorator(postProcessPipeline, default_vs, sobel_outline_fs, width, height);
+	postProcessPipeline = new PostProcessDecorator(postProcessPipeline, default_vs, sobel_outline_fs, width, height);
 	//postProcessPipeline = new PostProcessDecorator(postProcessPipeline, default_vs, sobel_add_fs, width, height);
 	//postProcessPipeline = new PostProcessDecorator(postProcessPipeline, default_vs, sobel_fs, width, height);
 	//postProcessPipeline = new PostProcessDecorator(postProcessPipeline, default_vs, sobel2_fs, width, height);
 	//postProcessPipeline = new PostProcessDecoratorTexturized(postProcessPipeline, noise, default_vs, cray_fs, width, height);
 	//postProcessPipeline = new PostProcessDecorator(postProcessPipeline, default_vs, blur_fs, width, height);
+	postProcessPipeline = new PostProcessDecoratorTexturized(postProcessPipeline, raytracer.getSpecularBufferId(), default_vs, merge_fs, width, height);
 
 
 }

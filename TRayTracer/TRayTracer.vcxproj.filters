@@ -161,6 +161,12 @@
     <None Include="bin\data\setupPass.comp">
       <Filter>Shaders\RayTracer</Filter>
     </None>
+    <None Include="bin\data\fragment_sobel_test2.frag">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="bin\data\fragment_merge.frag">
+      <Filter>Shaders\PostProcess</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Header">

@@ -44,6 +44,7 @@ namespace rav
 		App();
 		~App();
 
+		str name;
 		//GLFW Window
 		GLFWwindow* window;
 		VertexArray* screenQuadVAO;

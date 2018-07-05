@@ -208,6 +208,7 @@
     </None>
     <None Include="bin\data\fragment_base.frag" />
     <None Include="bin\data\fragment_gray.frag" />
+    <None Include="bin\data\fragment_merge.frag" />
     <None Include="bin\data\fragment_npr.frag" />
     <None Include="bin\data\fragment_sobel.frag" />
     <None Include="bin\data\fragment_sobel_add.frag" />
