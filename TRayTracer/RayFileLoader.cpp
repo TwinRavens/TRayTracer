@@ -33,7 +33,7 @@ ObjectData* RayFileLoader::InterpretMesh(aiMesh * mesh)
 	for (int i = 0; i < count; i++)
 	{
 
-		data->triangles[i] = Triangle{ mesh->mFaces[i].mIndices[0], mesh->mFaces[i].mIndices[1], mesh->mFaces[i].mIndices[2], 2,
+		data->triangles[i] = Triangle{ mesh->mFaces[i].mIndices[0], mesh->mFaces[i].mIndices[1], mesh->mFaces[i].mIndices[2], 0,
 										mesh->mFaces[i].mIndices[0], mesh->mFaces[i].mIndices[1], mesh->mFaces[i].mIndices[2], 0 };
 	}
 
@@ -103,6 +103,8 @@ ObjectData* RayFileLoader::LoadObject(const std::string& path)
 			for (int k = 0; k < temp[i]->triangleCount; k++, cTri++)
 			{
 				finalObject->triangles[cTri] = temp[i]->triangles[k];
+
+				finalObject->triangles[cTri].material = i % 7;
 
 				finalObject->triangles[cTri].v1 += cIndex;
 				finalObject->triangles[cTri].v2 += cIndex;

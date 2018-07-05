@@ -81,7 +81,7 @@ vec4 shade(vec3 point, vec3 normal, vec3 rayDir, int objId) {
 		for (int i = 0; i < lights[0].lightPosCount.w; i++) {
 
 			vec3 lightDir = normalize(lights[i].lightPosCount.xyz - point);
-			float diffuse = clamp(dot(lightDir, normal), 0, 1);
+			float diffuse = max(dot(lightDir, normal), 0);
 			vec4 id = kd * diffuse * diffuseColor * lights[i].lightColor;
 
 			//specular TODO: review this
@@ -91,7 +91,7 @@ vec4 shade(vec3 point, vec3 normal, vec3 rayDir, int objId) {
 			//Reflect = lightDir - 2 * normal * dot(normal, lightDir)
 			//Ou normalize(2 * normal * dot(normal, lightDir) - lightDir) quando o raio vem da fonte de luz
 			vec3 reflection = normalize(lightDir - 2 * normal * diffuse);
-			float specular = clamp(abs(pow(dot(reflection, rayDir), specullarPower)), 0, 1);
+			float specular = max(abs(pow(dot(reflection, rayDir), specullarPower)), 0);
 			
 			vec4 is = ks * specular * lights[i].lightColor;
 
