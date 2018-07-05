@@ -99,29 +99,27 @@ void main()
 	//Triangle origin to ray origin vector
 
 	//Determinant for inverse matrix
-	vec3 q = cross(rayDir, tv);
-	double ddet = dot(tu, q);
-	float det = float(ddet);
-//	if(det > -1 && det < 1) //If too close to zero
+	dvec3 q = cross(rayDir, tv);
+	double det = dot(tu, q);
+//	if(det > -0.0000001 && det < 0.0000001) //If too close to zero
 //		return;
-	double invddet = 1.0/ddet;
-	float invdet = float(invddet);
+	double invdet = 1.0/det;
 
 	//Solve component parameters
-	vec3 s = rayOrigin - v1;
-	float u = dot(s, q) * invdet;
+	dvec3 s = rayOrigin - v1;
+	double u = dot(s, q) * invdet;
 	if(u < 0)
 		return;
 
-	vec3 r = cross(s, tu);
-	float v = dot(rayDir, r) * invdet;
+	dvec3 r = cross(s, tu);
+	double v = dot(rayDir, r) * invdet;
 	if(v < 0)
 		return;
 
 	if((u+v) > 1)
 		return;
 
-	double t = dot(tv, r) * invddet;
+	double t = dot(tv, r) * invdet;
 	if(t <= 0)
 		return;
 
@@ -132,11 +130,11 @@ void main()
 		vec3 n1 = normals[triangles[triangleId].vIdmId[0]].xyz; //First Vertex
 		vec3 n2 = normals[triangles[triangleId].vIdmId[1]].xyz; //Second Vertex
 		vec3 n3 = normals[triangles[triangleId].vIdmId[2]].xyz; //Third Vertex
-		vec3 normal = n1 * (1.0-(u+v)) + n2 * u + n3 * v;
+		vec3 normal = n1 * (1.0-float(u+v)) + n2 * float(u) + n3 * float(v);
 		normal = normalize(normal);
 
 		//Calculate hit point
-		vec3 hit = rayOrigin + vec3(rayDir * t);
+		dvec3 hit = v1 + tu * u + tv * v;
 		hits[rayId] = RayHit(vec4(hit, rays[rayId].origAndWght.w), vec4(normal, 0), vec4(rayDir, t), ivec4(pixelCoords.xy, triangles[triangleId].vIdmId.w, 1));
 	}
 }
